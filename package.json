@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --port 8181",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
@@ -30,18 +30,21 @@
     "expo-status-bar": "~2.0.1",
     "expo-symbols": "^0.2.2",
     "expo-system-ui": "~4.0.8",
+    "expo-video": "~2.0.5",
     "expo-web-browser": "~14.0.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "^0.76.7",
     "react-native-gesture-handler": "~2.20.2",
+    "react-native-linear-gradient": "^2.8.3",
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
     "react-native-video": "^6.10.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "expo-video": "~2.0.5"
+    "expo-linear-gradient": "~14.0.2",
+    "expo-video-thumbnails": "~9.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
