@@ -1,26 +1,22 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, Button, FlatList, Dimensions } from "react-native";
+import { View, FlatList, Dimensions } from "react-native";
 import VideoPlayer from "./components/video"; 
+import FilterBar from "./components/FilterBar";
 
 const pagesize = 10;
 const googlesheetsdataurl = "https://sheets.googleapis.com/v4/spreadsheets/15sgdpVXsUMZdmxRdpfuFMc2pj4csPElt2dI7u5P9ROk/values/A2:F?key=AIzaSyCcADeLUsyye03WViRsMDviXjYOsmm-6eY";
 
-
-interface VideoData {
-  id: string;
-  season: string;
-  event: string;
-  team1: string;
-  team2: string;
-  gameid: string;
-  uri: string;
-}
+const filterOptions = [
+  { id: "1", label: "For You" },
+  { id: "2", label: "Goal" },
+  { id: "3", label: "Yellow Card" },
+  { id: "4", label: "Red Card" },
+];
 
 export default function VideoFeed() {
   const [videodata, setVideodata] = useState([]);
-  const [filteredvideos, setFilteredvideos] = useState([]);
-  const [selectedFilter, setSelectedFilter] = useState(null);
   const [displaydata, setDisplaydata] = useState([]);
+  const [selectedFilter, setSelectedFilter] = useState("1"); 
   const [page, setPage] = useState(1);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
@@ -31,45 +27,60 @@ export default function VideoFeed() {
         const formattedData = data.values.map((item, index) => ({
           id: index.toString(),
           season: item[0],
-          event: item[1],
+          event: item[1].toLowerCase(), 
           team1: item[2],
           team2: item[3],
           gameid: item[4],
           uri: item[5],
         }));
         setVideodata(formattedData);
-        setDisplaydata(formattedData.slice(0, pagesize));
+        setDisplaydata(formattedData.slice(0, pagesize)); 
       });
   }, []);
 
+  // Function to apply filters
+  const applyFilter = (filterId) => {
+    setSelectedFilter(filterId); 
+
+    let filteredVideos = [];
+    if (filterId === "1") {
+      filteredVideos = videodata; // Show all
+    } else if (filterId === "2") {
+      filteredVideos = videodata.filter((video) => video.event.includes("goal"));
+    } else if (filterId === "3") {
+      filteredVideos = videodata.filter((video) => video.event.includes("yellow card"));
+    } else if (filterId === "4") {
+      filteredVideos = videodata.filter((video) => video.event.includes("red card"));
+    } else if (filterId === "5") {
+      filteredVideos = videodata.filter((video) => video.event.includes("substitution"));
+    }
+
+    setDisplaydata(filteredVideos);
+  };
+
+  useEffect(() => {
+    if (videodata.length > 0) {
+      applyFilter(selectedFilter);
+    }
+  }, [selectedFilter, videodata]); 
+
+  // Load more videos
   const loadmore = () => {
     if (page * pagesize >= videodata.length) return;
     setPage(page + 1);
     setDisplaydata(videodata.slice(0, (page + 1) * pagesize));
   };
 
+  // Detect visible video
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     if (viewableItems.length > 0) {
       setCurrentVideoIndex(viewableItems[0].index);
     }
   });
 
-  useEffect(() => {
-      if (selectedFilter) {
-        const filteredData = videodata.filter((videodata) => videodata.event === selectedFilter);
-        setFilteredvideos(filteredData);
-      } else {
-        setFilteredvideos([]);
-      }
-    }, [selectedFilter, videodata]);
-
   return (
     <View style={{ flex: 1 }}>
-      {/* <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}>
-        <Button title="All" onPress={() => setSelectedFilter(null)} />
-        <Button title="Event X" onPress={() => setSelectedFilter('goal')} />
-        <Button title="Event Y" onPress={() => setSelectedFilter('event_y')} />
-      </View>       */}
+      <FilterBar filters={filterOptions} selectedFilter={selectedFilter} onSelectFilter={setSelectedFilter} />
       <FlatList
         data={displaydata}
         keyExtractor={(item) => item.id}
@@ -86,7 +97,7 @@ export default function VideoFeed() {
             team2={item.team2}
             season={item.season}
             event={item.event}
-            isActive={index === currentVideoIndex} 
+            isActive={index === currentVideoIndex}
           />
         )}
       />
