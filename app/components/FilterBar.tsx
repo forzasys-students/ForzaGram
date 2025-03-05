@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Platform,  TouchableOpacity, StyleSheet } from "react-native";
 
 export default function FilterBar({ filters, selectedFilter, onSelectFilter }) {
   return (
@@ -34,8 +34,8 @@ export default function FilterBar({ filters, selectedFilter, onSelectFilter }) {
 const styles = StyleSheet.create({
   scrollContainer: {
     position: "absolute",
-    top: 10,
-    left: 0,
+    top: Platform.OS === "ios" ? 45 : 10, // Adjust top position for iOS
+    left: 10,
     right: 0,
     paddingVertical: 10,
     zIndex: 100,

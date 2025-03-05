@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { View, Text, Image, TouchableOpacity, Dimensions, ImageBackground, StatusBar } from "react-native";
+import { View, Text, Image, Platform, TouchableOpacity, Dimensions, ImageBackground, StatusBar } from "react-native";
 import { Video } from "expo-av";
 import { Asset } from 'expo-asset';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -83,17 +83,21 @@ export default function VideoPlayer({ videoUri, team1, team2, season, event, isA
       }}
     >
       <StatusBar barStyle="light-content" backgroundColor="black" />
-
       <Video
         ref={videoRef}
         source={{ uri: videoUri }}
         style={{
-          width: "100%",
-          height: "100%",
+          width: Dimensions.get("window").width,
+          height: Dimensions.get("window").height,
+          position: "absolute",
+          top: 0,
+          left: 0,
         }}
+        resizeMode="cover" // Ensures the video covers the entire screen properly
         isLooping
         useNativeControls={false}
       />
+
       <View
         style={{
           position: "absolute",
@@ -119,7 +123,7 @@ export default function VideoPlayer({ videoUri, team1, team2, season, event, isA
             Sign in with Facebook
           </Text>
         </LinearGradient> */}
-        <LinearGradient colors={['rgba(255, 255, 255, 0.3)', 'rgba(0, 0, 0, 0.3)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+        <LinearGradient colors={['rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.05)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           style={{
             flex: 1,
             flexDirection: "row",
@@ -141,10 +145,10 @@ export default function VideoPlayer({ videoUri, team1, team2, season, event, isA
             }}
             imageStyle={{ resizeMode: "contain" }} // Ensures full coverage
           />
-          <View style={{marginLeft: 5, flexDirection: "row"}}>
+          <View style={{ marginLeft: 5, flexDirection: "row" }}>
             <Image source={teamLogos[team1]} style={{ width: 60, height: 60, margin: 5, resizeMode: 'contain' }} />
             <View style={{ justifyContent: "center", alignItems: "center", }}>
-              <Text style={{ fontSize: 20, fontWeight: "bold", color: "#fff", backgroundColor: "#1d51a3", padding: 5, borderRadius:9 }}>0 - 4</Text>
+              <Text style={{ fontSize: 20, fontWeight: "bold", color: "#fff", backgroundColor: "#1d51a3", padding: 5, borderRadius: 9 }}>0 - 4</Text>
             </View>
             <Image source={teamLogos[team2]} style={{ width: 60, height: 60, margin: 5, resizeMode: 'contain' }} />
           </View>
