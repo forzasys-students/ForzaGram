@@ -31,7 +31,8 @@ export default function VideoFeed() {
           team1: item[2],
           team2: item[3],
           gameid: item[4],
-          uri: item[5],
+          assedid: item[5],
+          uri: item[6],
         }));
         setVideodata(formattedData);
         setDisplaydata(formattedData.slice(0, pagesize)); 
@@ -50,7 +51,7 @@ export default function VideoFeed() {
     } else if (filterId === "3") {
       filteredVideos = videodata.filter((video) => video.event.includes("yellow card"));
     } else if (filterId === "4") {
-      filteredVideos = videodata.filter((video) => video.event.includes("red card"));
+      filteredVideos = videodata.filter((video) => video.event.includes("shot"));
     } else if (filterId === "5") {
       filteredVideos = videodata.filter((video) => video.event.includes("substitution"));
     }

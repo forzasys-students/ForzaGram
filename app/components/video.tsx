@@ -135,7 +135,7 @@ export default function VideoPlayer({ videoUri, team1, team2, season, event, isA
           }}>
 
           <ImageBackground
-            source={teamLogos['Allsvensken']} // Replace with your actual logo
+            source={teamLogos['Allsvensken']} 
             style={{
               position: "absolute",
               width: "110%", // Zoom effect
