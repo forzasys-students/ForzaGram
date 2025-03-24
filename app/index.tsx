@@ -4,7 +4,7 @@ import VideoPlayer from "./components/video";
 import FilterBar from "./components/FilterBar";
 
 const pagesize = 10;
-const googlesheetsdataurl = "https://sheets.googleapis.com/v4/spreadsheets/15sgdpVXsUMZdmxRdpfuFMc2pj4csPElt2dI7u5P9ROk/values/A2:F?key=AIzaSyCcADeLUsyye03WViRsMDviXjYOsmm-6eY";
+const googlesheetsdataurl = "https://sheets.googleapis.com/v4/spreadsheets/15sgdpVXsUMZdmxRdpfuFMc2pj4csPElt2dI7u5P9ROk/values/A2:G?key=AIzaSyCcADeLUsyye03WViRsMDviXjYOsmm-6eY";
 
 const filterOptions = [
   { id: "1", label: "For You" },
@@ -36,6 +36,7 @@ export default function VideoFeed() {
         }));
         setVideodata(formattedData);
         setDisplaydata(formattedData.slice(0, pagesize)); 
+        console.log(formattedData);
       });
   }, []);
 
