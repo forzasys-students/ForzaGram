@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import Timeline from "../Screens/Timeline";
 import IndexScreen from "@/Screens/Videofeed";
 import VideoScreen from "@/Screens/VideoScreen";
+import Fixtures from "../Screens/Fixtures";
 
 export type RootStackParamList = {
   Index: undefined;
@@ -38,6 +39,11 @@ export default function RootNavigator() {
             name="VideoScreen"
             component={VideoScreen}
             options={{ title: 'Video Player',headerShown: false }}
+          />
+          <Stack.Screen
+            name="Fixtures"
+            component={Fixtures}
+            options={{ title: 'All fixtures'}}
           />
         </>
       </Stack.Navigator>

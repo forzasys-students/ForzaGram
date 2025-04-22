@@ -87,7 +87,9 @@ export default function VideoPlayer({
   const handleNavigateToTimeline = () => {
     navigation.navigate("Timeline", { gameid });
   };
-
+  const handleNavigateToFixtures = () => {
+    navigation.navigate("Fixtures", { gameid });
+  };
   return (
     <TouchableOpacity
       activeOpacity={1}
@@ -142,11 +144,11 @@ export default function VideoPlayer({
             <Text style={{ color: "white", fontWeight: "bold" }}>
               View Timeline
             </Text>
-            
+
           </TouchableOpacity>
-         
+
         </View>
-        
+
       )}
 
       {/* Score and event overlay */}
@@ -178,7 +180,8 @@ export default function VideoPlayer({
           {matchInfo && (
             <>
               <ImageBackground
-                source={{ uri: matchInfo.home_team.logo_url }}
+                // source={{ uri: matchInfo.home_team.logo_url }}
+                source={require("./images/Allsvenskan.png")}
                 style={{
                   position: "absolute",
                   width: "110%",
