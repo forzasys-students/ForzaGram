@@ -19,51 +19,58 @@ const googleSheetsDataUrl = "https://sheets.googleapis.com/v4/spreadsheets/15sgd
 export default function Fixtures() {
   const [fixtures, setFixtures] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [games, setGames] = useState([]);
 
-  useEffect(() => {
-    const fetchFixtures = async () => {
-      try {
-        // Fetch fixture IDs from Google Sheets
-        const sheetResponse = await fetch(googleSheetsDataUrl);
-        const sheetData = await sheetResponse.json();
-        const fixtureIds = sheetData.values.map((row) => row[4]);
+   useEffect(() => {
+      fetch(googleSheetsDataUrl)
+        .then((response) => response.json())
+        .then((data) => {
+          const allGameIds = data.values.map((item) => item[4]);
 
-        // Fetch fixture details for each ID
-        const fixturePromises = fixtureIds.map((gameid) =>
-          fetch(`https://api.xyz.com/${gameid}/info`).then((res) => res.json())
-        );
-        const fixtureDetails = await Promise.all(fixturePromises);
+      // Step 2: Filter only unique gameids
+      const uniqueGameIds = [...new Set(allGameIds)];
+      console.log("✅ Unique Game IDs:", uniqueGameIds);
 
-        setFixtures(fixtureDetails);
-      } catch (error) {
-        console.error("Error fetching fixtures:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Step 3: Format for your loop
+      const formattedData = uniqueGameIds.map((gameid, index) => ({
+        id: index.toString(),
+        gameid,
+      }));
+          setGames(formattedData);
+          const matchInfoPromises = formattedData.map((game) => {
+            const gameinfo = fetch(`https://api.forzasys.com/allsvenskan/game/${game.gameid}`)
+              .then((response) => response.json())
+              .then((matchJson) => {
+                return {
+                  home_team: matchJson.home_team,
+                  visiting_team: matchJson.visiting_team,
+                  start_of_1st_half: matchJson.start_of_1st_half,
+                };
+              });
+            return gameinfo;  
 
-    fetchFixtures();
-  }, []);
+          });
+          Promise.all(matchInfoPromises).then((matchInfo) => {
+            setFixtures(matchInfo);
+            console.log(matchInfo);
+            setLoading(false);
+          });
+        });
+    }, []);
 
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView >
       {fixtures.map((fixture, index) => (
-        <View>
+        <View key={index} style={{ marginBottom: 20 }}>
             <Text>
-                {fixture.home_team} - {fixture.visiting_team}
+                {fixture.home_team.name} - {fixture.visiting_team.name}
             </Text>
         </View>
       ))}
     </ScrollView>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 10,
-  },
-});
+   }

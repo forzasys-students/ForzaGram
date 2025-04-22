@@ -121,7 +121,7 @@ export default function VideoPlayer({
         <View
           style={{
             position: "absolute",
-            left: 230,
+            left: 110,
             bottom: 130,
             backgroundColor: "#1d51a3",
             paddingVertical: 10,
@@ -145,6 +145,20 @@ export default function VideoPlayer({
               View Timeline
             </Text>
 
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleNavigateToFixtures}
+            style={{
+              backgroundColor: "#fff",
+              paddingVertical: 5,
+              paddingHorizontal: 10,
+              borderRadius: 20,
+              marginLeft: 10,
+            }}
+          >
+            <Text style={{ color: "#1d51a3", fontWeight: "bold" }}>
+              View Fixtures
+            </Text>
           </TouchableOpacity>
 
         </View>
