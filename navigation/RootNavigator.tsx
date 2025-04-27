@@ -6,6 +6,7 @@ import Timeline from "../Screens/Timeline";
 import IndexScreen from "@/Screens/Videofeed";
 import VideoScreen from "@/Screens/VideoScreen";
 import Fixtures from "../Screens/Fixtures";
+import Lineup from '../Screens/Lineup';
 
 export type RootStackParamList = {
   Index: undefined;
@@ -33,17 +34,17 @@ export default function RootNavigator() {
           <Stack.Screen
             name="Timeline"
             component={Timeline}
-            options={{ title: 'Match Timeline'}}
+            options={{ title: 'Match Timeline' }}
           />
           <Stack.Screen
             name="VideoScreen"
             component={VideoScreen}
-            options={{ title: 'Video Player',headerShown: false }}
+            options={{ title: 'Video Player', headerShown: false }}
           />
           <Stack.Screen
             name="Fixtures"
             component={Fixtures}
-            options={{ title: 'All fixtures'}}
+            options={{ title: 'All fixtures' }}
           />
         </>
       </Stack.Navigator>

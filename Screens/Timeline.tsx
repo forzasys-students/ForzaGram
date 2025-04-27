@@ -1,18 +1,24 @@
 // Timeline.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useNa } from 'react';
 import {
   View,
   Text,
+  TouchableOpacity,
   ScrollView,
   ActivityIndicator,
   Image,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from '../navigation/RootNavigator';
 import EventCard from '../components/EventCard';
 
 type TimelineRouteProp = RouteProp<RootStackParamList, 'Timeline'>;
+
+const initialLayout = { width: Dimensions.get('window').width };
+
 
 export default function Timeline() {
   const route = useRoute<TimelineRouteProp>();
@@ -22,6 +28,8 @@ export default function Timeline() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [startOf1stHalfMs, setStartOf1stHalfMs] = useState<number | null>(null);
+  const navigation = useNavigation<TimelineRouteProp>();
+
 
   useEffect(() => {
     const loadTimelineData = async () => {
@@ -61,6 +69,19 @@ export default function Timeline() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <MatchHeader matchInfo={matchInfo} />
+      {/* <View style={{ marginVertical: 20, alignItems: 'center' }}>
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#1d51a3',
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 5,
+          }}
+          onPress={() => navigation.navigate('Lineup', { gameid })}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold' }}>View Lineup</Text>
+        </TouchableOpacity>
+      </View> */}
       {events.map((event, index) => (
         <EventItem key={index} event={event} matchInfo={matchInfo} />
       ))}
@@ -78,19 +99,19 @@ const LoadingIndicator = () => (
 const MatchHeader = ({ matchInfo }: { matchInfo: any }) => (
   <View >
     <View style={styles.header}>
-    <Text style = {{ fontWeight : 'bold', fontSize : 15 }}>{matchInfo.home_team.short_name}</Text>
-    <Image source={{ uri: matchInfo.home_team.logo_url }} style={styles.logo} />
-    
-    <Text style={styles.score}>
-      {matchInfo.home_team_goals} - {matchInfo.visiting_team_goals}
-    </Text>
-    <Image source={{ uri: matchInfo.visiting_team.logo_url }} style={styles.logo} />
-    <Text style = {{ fontWeight : 'bold', fontSize : 15 }}>{matchInfo.visiting_team.short_name}</Text>
+      <Text style={{ fontWeight: 'bold', fontSize: 15 }}>{matchInfo.home_team.short_name}</Text>
+      <Image source={{ uri: matchInfo.home_team.logo_url }} style={styles.logo} />
+
+      <Text style={styles.score}>
+        {matchInfo.home_team_goals} - {matchInfo.visiting_team_goals}
+      </Text>
+      <Image source={{ uri: matchInfo.visiting_team.logo_url }} style={styles.logo} />
+      <Text style={{ fontWeight: 'bold', fontSize: 15 }}>{matchInfo.visiting_team.short_name}</Text>
     </View>
-      <View style= {styles.matchInfo}> 
-        <Text style = {{fontSize : 16 , fontWeight : 'bold', color : '#1d51a3'}}>Stadium: {matchInfo.stadium_name}</Text>
-        <Text  style = {{fontSize : 16 , fontWeight : 'bold', color : '#1d51a3'}}>Toutnement: {matchInfo.tournament_name}</Text>
-      </View>
+    <View style={styles.matchInfo}>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>Stadium: {matchInfo.stadium_name}</Text>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>Toutnement: {matchInfo.tournament_name}</Text>
+    </View>
   </View>
 );
 
@@ -112,8 +133,8 @@ const EventItem = ({ event, matchInfo }: { event: any; matchInfo: any }) => {
   const keeper = tag?.keeper?.value || tag?.player?.value || undefined;
   const assist = tag?.['assist by']?.value ?? null;
   const team = tag?.team?.value ?? undefined;
-  const imageLogo = team === matchInfo.home_team.name 
-    ? matchInfo.home_team.logo_url 
+  const imageLogo = team === matchInfo.home_team.name
+    ? matchInfo.home_team.logo_url
     : matchInfo.visiting_team.logo_url;
   const homeTeam = matchInfo.home_team.name
   const visitingTeam = matchInfo.visiting_team.name
@@ -129,15 +150,15 @@ const EventItem = ({ event, matchInfo }: { event: any; matchInfo: any }) => {
       to={to}
       eventType={eventType}
       scorer={scorer}
-      keeper = {keeper}
+      keeper={keeper}
       assist={assist}
       team={team}
       gametime={gametime}
       imageLogo={imageLogo}
-      homeTeam = {homeTeam}
-      visiting_team = {visitingTeam}
+      homeTeam={homeTeam}
+      visiting_team={visitingTeam}
     />
-    
+
   );
 };
 
@@ -157,7 +178,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#f5f5f5',
-    
+
   },
   logo: {
     width: 50,
@@ -168,15 +189,15 @@ const styles = StyleSheet.create({
   score: {
     fontSize: 24,
     paddingRight: 20,
-    paddingLeft : 20,
-    paddingTop : 12,
-    paddingBottom : 12,
+    paddingLeft: 20,
+    paddingTop: 12,
+    paddingBottom: 12,
     fontWeight: 'bold',
     borderRadius: 40,
-    backgroundColor : '#c0c0c0'
+    backgroundColor: '#c0c0c0'
   },
-  matchInfo:{
-    padding : 12, 
-    backgroundColor : '#f5f5f5',
+  matchInfo: {
+    padding: 12,
+    backgroundColor: '#f5f5f5',
   }
 });
