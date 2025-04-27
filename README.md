@@ -2,6 +2,59 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
+
+## Workflow
+
+```mermaid
+flowchart TD
+    %% User Workflow
+    Start([User Opens App]) --> VideoFeed[Video Feed Screen]
+    
+    %% Video Feed Main Flow
+    VideoFeed --> FilterContent{Filter Content?}
+    FilterContent -- "Yes" --> SelectFilter[Select Category Filter]
+    SelectFilter --> ShowFiltered[Display Filtered Videos]
+    FilterContent -- "No" --> BrowseVideos[Browse Default Videos]
+    
+    %% Video Interaction
+    BrowseVideos --> VideoInteraction{Interact with Video?}
+    ShowFiltered --> VideoInteraction
+    
+    VideoInteraction -- "Swipe Videos" --> NextVideo[View Next Video]
+    NextVideo --> VideoInteraction
+    
+    VideoInteraction -- "Tap Match Info" --> GoToTimeline[Go to Match Timeline]
+    VideoInteraction -- "Watch Full" --> PlayFullVideo[Watch Full Video in Player]
+    
+    %% Timeline Flow
+    GoToTimeline --> ViewTimeline[View Match Timeline]
+    ViewTimeline --> TimelineInteraction{Timeline Interaction}
+    
+    TimelineInteraction -- "Tap Event" --> ViewEvent[View Event Details]
+    ViewEvent --> WatchEvent[Watch Event Video Clip]
+    TimelineInteraction -- "Browse Fixtures" --> GoToFixtures[Go to Fixtures Screen]
+    
+    %% Fixtures Flow
+    GoToFixtures --> ViewFixtures[View Match Fixtures]
+    ViewFixtures --> FixtureInteraction{Fixture Interaction}
+    FixtureInteraction -- "Select Match" --> MatchDetails[View Match Details]
+    MatchDetails --> GoToTimeline
+    
+    %% Data Source
+    VideoFeed -- "Loads Content" --> GoogleSheets[(Google Sheets API)]
+    
+    %% Styling
+    classDef screen fill:#f9f9f9,stroke:#333,stroke-width:2px
+    classDef interaction fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef action fill:#fff8e1,stroke:#ff8f00,stroke-width:2px
+    classDef dataSource fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px
+    
+    class VideoFeed,ViewTimeline,PlayFullVideo,ViewFixtures screen
+    class VideoInteraction,TimelineInteraction,FixtureInteraction interaction
+    class NextVideo,GoToTimeline,ViewEvent,WatchEvent,GoToFixtures,MatchDetails action
+    class GoogleSheets dataSource
+``` 
+
 ## Get started
 
 1. Install dependencies
