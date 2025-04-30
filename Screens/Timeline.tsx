@@ -1,9 +1,7 @@
-// Timeline.tsx
-import React, { useEffect, useState, useNa } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   ScrollView,
   ActivityIndicator,
   Image,
@@ -11,25 +9,26 @@ import {
   Dimensions,
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import EventCard from '../components/EventCard';
-
 type TimelineRouteProp = RouteProp<RootStackParamList, 'Timeline'>;
-
 const initialLayout = { width: Dimensions.get('window').width };
-
+const FILTER_OPTIONS = ['all', 'goals', 'cards', 'setpieces'] as const;
+type FilterOption = typeof FILTER_OPTIONS[number];
 
 export default function Timeline() {
   const route = useRoute<TimelineRouteProp>();
   const { gameid } = route.params;
-
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [startOf1stHalfMs, setStartOf1stHalfMs] = useState<number | null>(null);
-  const navigation = useNavigation<TimelineRouteProp>();
-
+  const [index, setIndex] = useState(0);
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption>('all');
+  const routes = [
+    { key: 'top', title: 'Top Events' },
+    { key: 'full', title: 'Full Events' },
+  ];
 
   useEffect(() => {
     const loadTimelineData = async () => {
@@ -37,13 +36,8 @@ export default function Timeline() {
         const matchRes = await fetch(`https://api.forzasys.com/allsvenskan/game/${gameid}`);
         const matchJson = await matchRes.json();
         setMatchInfo(matchJson);
-
-        const startTime = new Date(matchJson.start_of_1st_half).getTime();
-        setStartOf1stHalfMs(startTime);
-
-        const eventRes = await fetch(`https://api.forzasys.com/allsvenskan/game/${gameid}/events`);
+        const eventRes = await fetch(`https://api.forzasys.com/allsvenskan/game/${gameid}/events?count=99999`);
         const eventJson = await eventRes.json();
-
         const eventsData = eventJson?.events || [];
         eventsData.sort((a, b) => {
           const aTime = a?.playlist?.events?.[0]?.from_timestamp || 0;
@@ -62,32 +56,88 @@ export default function Timeline() {
     loadTimelineData();
   }, [gameid]);
 
-  if (loading || !startOf1stHalfMs) {
+  const filterEvents = (list: any[], filter: FilterOption) => {
+    return list.filter(event => {
+      const action = event?.tag?.action?.toLowerCase() || '';
+      const onTarget = event?.tag?.['on target']?.value?.toLowerCase() || '';
+      if (filter === 'goals') return action.includes('goal');
+      if (filter === 'cards') return action.includes('yellow') || action.includes('red');
+      if (filter === 'setpieces') return (
+        action.includes('corner') || action.includes('penalty') ||
+        action.includes('free kick')
+      );
+      return true;
+    });
+  };
+
+  const renderTopEvents = () => {
+    const topEvents = filterEvents(events, 'goals')
+      .concat(events.filter(event => {
+        const action = event?.tag?.action?.toLowerCase() || '';
+        const onTarget = event?.tag?.['on target']?.value?.toLowerCase() || '';
+        return action === 'shot' && onTarget === 'yes';
+      }));
+
+    return (
+      <EventList events={topEvents} />
+    );
+  };
+
+  const renderFullEvents = () => {
+    const filteredEvents = filterEvents(events, selectedFilter);
+    return (
+      <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
+        <FilterBar selected={selectedFilter} onChange={setSelectedFilter} />
+        {filteredEvents.length > 0
+          ? filteredEvents.map((event, index) => (
+              <EventItem key={index} event={event} matchInfo={matchInfo} />
+            ))
+          : <Text style={styles.noEventsText}>No Events Available</Text>}
+      </ScrollView>
+    );
+  };
+
+  const renderScene = SceneMap({
+    top: renderTopEvents,
+    full: renderFullEvents,
+  });
+
+  const renderTabBar = (props: any) => (
+    <TabBar
+      {...props}
+      indicatorStyle={{ backgroundColor: '#1d51a3', height: 3 }}
+      style={{ backgroundColor: 'black' }}
+      renderLabel={({ route, focused }) => (
+        <Text style={{
+          color: focused ? '#1d51a3' : '#888',
+          fontWeight: focused ? 'bold' : 'normal',
+          fontSize: 16,
+        }}>
+          {route.title}
+        </Text>
+      )}
+    />
+  );
+
+  if (loading) {
     return <LoadingIndicator />;
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <MatchHeader matchInfo={matchInfo} />
-      {/* <View style={{ marginVertical: 20, alignItems: 'center' }}>
-        <TouchableOpacity
-          style={{
-            backgroundColor: '#1d51a3',
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            borderRadius: 5,
-          }}
-          onPress={() => navigation.navigate('Lineup', { gameid })}
-        >
-          <Text style={{ color: '#fff', fontWeight: 'bold' }}>View Lineup</Text>
-        </TouchableOpacity>
-      </View> */}
-      {events.map((event, index) => (
-        <EventItem key={index} event={event} matchInfo={matchInfo} />
-      ))}
-    </ScrollView>
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        renderTabBar={renderTabBar}
+        onIndexChange={setIndex}
+        initialLayout={initialLayout}
+        style={{ flex: 1 }}
+      />
+    </View>
   );
 }
+
 
 const LoadingIndicator = () => (
   <View style={styles.centered}>
@@ -97,11 +147,10 @@ const LoadingIndicator = () => (
 );
 
 const MatchHeader = ({ matchInfo }: { matchInfo: any }) => (
-  <View >
+  <View>
     <View style={styles.header}>
       <Text style={{ fontWeight: 'bold', fontSize: 15 }}>{matchInfo.home_team.short_name}</Text>
       <Image source={{ uri: matchInfo.home_team.logo_url }} style={styles.logo} />
-
       <Text style={styles.score}>
         {matchInfo.home_team_goals} - {matchInfo.visiting_team_goals}
       </Text>
@@ -109,17 +158,42 @@ const MatchHeader = ({ matchInfo }: { matchInfo: any }) => (
       <Text style={{ fontWeight: 'bold', fontSize: 15 }}>{matchInfo.visiting_team.short_name}</Text>
     </View>
     <View style={styles.matchInfo}>
-      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>Stadium: {matchInfo.stadium_name}</Text>
-      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>Toutnement: {matchInfo.tournament_name}</Text>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>
+        Stadium: {matchInfo.stadium_name}
+      </Text>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>
+        Tournament: {matchInfo.tournament_name}
+      </Text>
     </View>
   </View>
 );
 
+const EventList = ({ events }: { events: any[] }) => (
+  <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
+    {events.length > 0
+      ? events.map((event, index) => (
+          <EventItem key={index} event={event} matchInfo={null} />
+        ))
+      : <Text style={styles.noEventsText}>No Top Events</Text>}
+  </ScrollView>
+);
 
-let Logo = ({ matchInfo }: { matchInfo: any }) => {
-  return matchInfo.visiting_team.logo_url;
-};
-
+const FilterBar = ({ selected, onChange }: { selected: string; onChange: (value: any) => void }) => (
+  <View style={styles.filterBar}>
+    {FILTER_OPTIONS.map(option => (
+      <Text
+        key={option}
+        style={[
+          styles.filterOption,
+          selected === option && styles.selectedFilterOption
+        ]}
+        onPress={() => onChange(option)}
+      >
+        {option.toUpperCase()}
+      </Text>
+    ))}
+  </View>
+);
 
 const EventItem = ({ event, matchInfo }: { event: any; matchInfo: any }) => {
   const subEvent = event?.playlist?.events?.[0];
@@ -133,15 +207,12 @@ const EventItem = ({ event, matchInfo }: { event: any; matchInfo: any }) => {
   const keeper = tag?.keeper?.value || tag?.player?.value || undefined;
   const assist = tag?.['assist by']?.value ?? null;
   const team = tag?.team?.value ?? undefined;
-  const imageLogo = team === matchInfo.home_team.name
-    ? matchInfo.home_team.logo_url
-    : matchInfo.visiting_team.logo_url;
-  const homeTeam = matchInfo.home_team.name
-  const visitingTeam = matchInfo.visiting_team.name
-  // console.log("🧩 Event debug:", JSON.stringify(event, null, 2))
-  //console.log( 'Here is console log ' + homeTeam + '  VVSSS  ' + visitingTeam)
-  //console.log( 'Improtenet Info ' + JSON.stringify(event))
+
   if (!assetId || !from || !to || !eventType) return null;
+
+  const imageLogo = team && matchInfo
+    ? (team === matchInfo.home_team.name ? matchInfo.home_team.logo_url : matchInfo.visiting_team.logo_url)
+    : undefined;
 
   return (
     <EventCard
@@ -155,18 +226,14 @@ const EventItem = ({ event, matchInfo }: { event: any; matchInfo: any }) => {
       team={team}
       gametime={gametime}
       imageLogo={imageLogo}
-      homeTeam={homeTeam}
-      visiting_team={visitingTeam}
+      homeTeam={matchInfo?.home_team.name}
+      visiting_team={matchInfo?.visiting_team.name}
     />
-
   );
 };
 
+
 const styles = StyleSheet.create({
-  container: {
-    paddingBottom: 60,
-    backgroundColor: '#fff',
-  },
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -178,7 +245,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#f5f5f5',
-
   },
   logo: {
     width: 50,
@@ -188,16 +254,40 @@ const styles = StyleSheet.create({
   },
   score: {
     fontSize: 24,
-    paddingRight: 20,
-    paddingLeft: 20,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     fontWeight: 'bold',
     borderRadius: 40,
-    backgroundColor: '#c0c0c0'
+    backgroundColor: '#c0c0c0',
   },
   matchInfo: {
     padding: 12,
     backgroundColor: '#f5f5f5',
-  }
+  },
+  noEventsText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: '#999',
+  },
+  filterBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 10,
+    paddingVertical: 5,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    marginHorizontal: 10,
+  },
+  filterOption: {
+    fontSize: 14,
+    color: '#666',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  selectedFilterOption: {
+    color: '#1d51a3',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
 });

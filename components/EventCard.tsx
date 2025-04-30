@@ -1,4 +1,3 @@
-// components/EventCard.tsx
 import React, { useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View, LayoutAnimation, Platform, UIManager, Image} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
