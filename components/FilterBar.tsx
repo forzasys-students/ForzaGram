@@ -1,61 +1,173 @@
-import React from "react";
-import { View, Text, ScrollView, Platform,  TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/RootNavigator";
 
-export default function FilterBar({ filters, selectedFilter, onSelectFilter }) {
+interface FilterOption {
+  id: string;
+  label: string;
+}
+
+interface FilterBarProps {
+  filters: FilterOption[];
+  selectedFilter: string;
+  onSelectFilter: (id: string) => void;
+}
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Index">;
+
+const FilterBar: React.FC<FilterBarProps> = ({ filters, selectedFilter, onSelectFilter }) => {
+  const [isEventDropdownOpen, setEventDropdownOpen] = useState(false);
+  const navigation = useNavigation<NavigationProp>();
+
+  const handleSelect = (id: string) => {
+    onSelectFilter(id);
+    setEventDropdownOpen(false);
+  };
+  const handleNavigateToFixtures = () => {
+    navigation.navigate("Fixtures", {  });
+  };
+  const selectedFilterLabel = () => {
+    if (selectedFilter === "1") {
+      return "By event";
+    }
+    const found = filters.find((f) => f.id === selectedFilter);
+    return found ? found.label : "By event";
+  };
+  
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.scrollContainer} 
-    >
-      {filters.map((filter) => (
+    <View style={styles.container}>
+      {/* Main buttons row */}
+      <View style={styles.buttonRow}>
+        
+        {/* "For You" button */}
         <TouchableOpacity
-          key={filter.id}
           style={[
             styles.filterButton,
-            selectedFilter === filter.id && styles.selectedButton, 
+            selectedFilter === "1" && styles.selectedButton,
           ]}
-          onPress={() => onSelectFilter(filter.id)}
+          onPress={() => handleSelect("1")}
         >
           <Text
             style={[
-              styles.filterText,
-              selectedFilter === filter.id && styles.selectedText, 
+              styles.buttonText,
+              selectedFilter === "1" && styles.selectedButtonText,
             ]}
           >
-            {filter.label}
+            For You
           </Text>
         </TouchableOpacity>
-      ))}
-    </ScrollView>
+
+        {/* "By Event" button */}
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            selectedFilter !== "1" && styles.selectedButton,
+          ]}
+          onPress={() => setEventDropdownOpen((prev) => !prev)}
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              selectedFilter !== "1" && styles.selectedButtonText,
+            ]}
+          >
+        {selectedFilterLabel()} ▼
+          </Text>
+        </TouchableOpacity>
+
+        {/* "All matches" button */}
+        <TouchableOpacity style={styles.allMatchesButton} onPress={handleNavigateToFixtures}>
+          <Text style={styles.allMatchesText}>All matches</Text>
+        </TouchableOpacity>
+
+      </View>
+
+      {/* Dropdown under "By Event" */}
+      {isEventDropdownOpen && (
+        <View style={styles.dropdownMenu}>
+          {filters
+            .filter((filter) => filter.id !== "1") // exclude "For You" from dropdown
+            .map((filter) => (
+              <TouchableOpacity
+                key={filter.id}
+                style={styles.dropdownItem}
+                onPress={() => handleSelect(filter.id)}
+              >
+                <Text style={styles.itemText}>{filter.label}</Text>
+              </TouchableOpacity>
+            ))}
+        </View>
+      )}
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    position: "absolute",
-    top: Platform.OS === "ios" ? 45 : 10, // Adjust top position for iOS
-    left: 10,
-    right: 0,
-    paddingVertical: 10,
-    zIndex: 100,
+  container: {
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    paddingBottom: 5,
+    backgroundColor: "transparent", // <-- make background transparent
+    zIndex: 10,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 0, // remove extra margin
   },
   filterButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginHorizontal: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)", 
+    backgroundColor: "#eee", // gray button background
+    marginRight: 10,
   },
   selectedButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.8)", 
+    backgroundColor: "#000", // selected button black
   },
-  filterText: {
+  buttonText: {
     fontSize: 14,
-    color: "white",
-    fontWeight: "bold",
+    color: "#333",
   },
-  selectedText: {
-    color: "black", 
+  selectedButtonText: {
+    color: "#fff",
+  },
+  allMatchesButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#007BFF",
+    marginLeft: "auto",
+  },
+  allMatchesText: {
+    fontSize: 14,
+    color: "#fff",
+  },
+  dropdownMenu: {
+    position: "absolute", 
+  top: 45,               
+  left: 110,             
+  width: 150,            
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 5,
+  overflow: "hidden",
+  zIndex: 1000,     
+  },
+  dropdownItem: {
+    padding: 10,
+    borderBottomColor: "#eee",
+    borderBottomWidth: 1,
+  },
+  itemText: {
+    fontSize: 14,
+    color: "#333",
   },
 });
+
+export default FilterBar;

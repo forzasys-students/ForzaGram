@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, FlatList, Dimensions, TouchableOpacity, Text } from "react-native";
+import { View, FlatList, Dimensions, TouchableOpacity, Text, StyleSheet } from "react-native";
 import 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,15 +16,14 @@ const filterOptions = [
   { id: "2", label: "Goal" },
   { id: "3", label: "Yellow Card" },
   { id: "4", label: "Shot" },
-  { id: "5", label: "Red Catd" },
-  { id: "6", label: "Free Kick" },
+  
 ];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Index'>; // later for understanding 
 
 export default function IndexScreen() {
   const navigation = useNavigation<NavigationProp>();
-
+  const flatListRef = useRef<FlatList>(null);
   const [videodata, setVideodata] = useState([]);
   const [displaydata, setDisplaydata] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("1"); 
@@ -52,9 +51,9 @@ export default function IndexScreen() {
   }, []);
 
   const applyFilter = (filterId) => {
-    setSelectedFilter(filterId); 
+    setSelectedFilter(filterId);
     let filteredVideos = [];
-
+  
     if (filterId === "1") {
       filteredVideos = videodata;
     } else if (filterId === "2") {
@@ -64,9 +63,15 @@ export default function IndexScreen() {
     } else if (filterId === "4") {
       filteredVideos = videodata.filter((video) => video.event.includes("shot"));
     }
-
+  
     setDisplaydata(filteredVideos);
+  
+    // 🔥 Scroll FlatList to the top after filter change
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({ offset: 0, animated: false });
+    }
   };
+  
 
   useEffect(() => {
     if (videodata.length > 0) {
@@ -92,9 +97,15 @@ export default function IndexScreen() {
   return (
     <View style={{ flex: 1 }}>
       
-      <FilterBar filters={filterOptions} selectedFilter={selectedFilter} onSelectFilter={setSelectedFilter} />
-      
-      <FlatList
+      <View style={styles.filterBarContainer}>
+        <FilterBar
+          filters={filterOptions}
+          selectedFilter={selectedFilter}
+          onSelectFilter={setSelectedFilter}
+        />
+      </View>      
+      <FlatList 
+      ref={flatListRef}
         data={displaydata}
         keyExtractor={(item) => item.id}
         snapToInterval={Dimensions.get("window").height}
@@ -123,4 +134,15 @@ export default function IndexScreen() {
       
     </View>
   );
+  
 }
+const styles = StyleSheet.create({
+  filterBarContainer: {
+    position: "absolute",   
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 10,
+    zIndex: 100,           
+  },
+});
