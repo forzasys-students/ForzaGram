@@ -46,6 +46,11 @@ export default function RootNavigator() {
             component={Fixtures}
             options={{ title: 'All fixtures' }}
           />
+          <Stack.Screen
+            name="Lineup"
+            component={Lineup}
+            options={{ title: 'Fixture Lineup' }}
+          />
         </>
       </Stack.Navigator>
     </NavigationContainer>
