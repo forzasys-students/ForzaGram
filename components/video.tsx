@@ -40,6 +40,7 @@ export default function VideoPlayer({
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const isFocused = useIsFocused();
   const navigation = useNavigation<NavigationProp>();
 
@@ -57,6 +58,7 @@ export default function VideoPlayer({
 
   useEffect(() => {
     const fetchMatchInfo = async () => {
+      setIsLoading(true);
       try {
         const res = await fetch(
           `https://api.forzasys.com/allsvenskan/game/${gameid}`
@@ -65,6 +67,8 @@ export default function VideoPlayer({
         setMatchInfo(matchJson);
       } catch (err) {
         console.error("Error loading match info:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -90,6 +94,7 @@ export default function VideoPlayer({
   const handleNavigateToFixtures = () => {
     navigation.navigate("Fixtures", { gameid });
   };
+
   return (
     <TouchableOpacity
       activeOpacity={1}
@@ -121,7 +126,7 @@ export default function VideoPlayer({
         <View
           style={{
             position: "absolute",
-            left: 215,
+            left: 15,
             bottom: 150,
             backgroundColor: "#1d51a3",
             paddingVertical: 10,
@@ -146,7 +151,7 @@ export default function VideoPlayer({
             </Text>
 
           </TouchableOpacity>
-          
+
 
         </View>
 
@@ -180,18 +185,31 @@ export default function VideoPlayer({
         >
           {matchInfo && (
             <>
-              <ImageBackground
-                // source={{ uri: matchInfo.home_team.logo_url }}
-                source={require("./images/Allsvenskan.png")}
+              <View
                 style={{
                   position: "absolute",
-                  width: "110%",
-                  height: "135%",
-                  opacity: 0.2,
-                  marginLeft: -60,
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  overflow: "hidden", // Ensures the image is cropped to this box
+                  borderRadius: 10, // Optional, for smoother edges
+                  justifyContent: "center",
                 }}
-                imageStyle={{ resizeMode: "contain" }}
-              />
+              >
+                <Image
+                  // source={{ uri: matchInfo.tournament.logo_url }} // this should be used when an image from the API is available
+                  source={require("./images/Allsvenskan.png")}
+                  style={{
+                    width: "200%",       // Zoom it
+                    height: "140%",      // Zoom it
+                    resizeMode: "contain",
+                    opacity: 0.5,
+                    marginLeft: -300,     // Adjust horizontal crop
+                  }}
+                />
+              </View>
+
 
               <View style={{ marginLeft: 5, flexDirection: "row" }}>
                 <Image
@@ -213,7 +231,7 @@ export default function VideoPlayer({
                       color: "#fff",
                       backgroundColor: "#1d51a3",
                       padding: 5,
-                      borderRadius: 9,
+                      borderRadius: 12,
                     }}
                   >
                     <Text>{matchInfo.home_team_goals} - {matchInfo.visiting_team_goals}</Text>
@@ -235,44 +253,48 @@ export default function VideoPlayer({
           )}
         </LinearGradient>
 
+
+      </View>
+      <View
+        style={{
+          position: "absolute",
+          bottom: 70,
+          left: 220,
+          right: 0, // Added to make the container stretch to the right
+          flexDirection: "row",
+          padding: 10,
+          alignItems: "center",
+        }}
+      >
         <View
           style={{
-            flexDirection: "row",
-            padding: 10,
-            marginRight: 10,
+            width: 30,
+            height: 30,
+            borderRadius: 15,
+            backgroundColor: "white",
             alignItems: "center",
+            justifyContent: "center",
+            marginLeft: 5,
           }}
         >
-          <View
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 15,
-              backgroundColor: "white",
-              alignItems: "center",
-              justifyContent: "center",
-              marginLeft: 5,
-            }}
-          >
-            {event === "goal" || event === "shot" ? (
-              <FontAwesome name="futbol-o" size={20} color="black" />
-            ) : event === "yellow card" ? (
-              <View
-                style={{
-                  width: 13,
-                  height: 20,
-                  borderRadius: 3,
-                  backgroundColor: "#ffdd00",
-                  borderWidth: 0.5,
-                  borderColor: "#000",
-                }}
-              />
-            ) : null}
-          </View>
-          <Text style={{ fontSize: 16, color: "#ddd", paddingLeft: 10 }}>
-            {event.toUpperCase()}
-          </Text>
+          {event === "goal" || event === "shot" ? (
+            <FontAwesome name="futbol-o" size={20} color="black" />
+          ) : event === "yellow card" ? (
+            <View
+              style={{
+                width: 13,
+                height: 20,
+                borderRadius: 3,
+                backgroundColor: "#ffdd00",
+                borderWidth: 0.5,
+                borderColor: "#000",
+              }}
+            />
+          ) : null}
         </View>
+        <Text style={{ fontSize: 16, color: "#fff", paddingLeft: 10 }}>
+          {event.toUpperCase()}
+        </Text>
       </View>
 
       {/* Play Icon Overlay */}
