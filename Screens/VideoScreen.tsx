@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { Image } from 'react-native';
 import {
   View,
   StyleSheet,
@@ -18,7 +19,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function VideoScreen() {
   const route = useRoute<VideoScreenRouteProp>();
-  const { assetId, from, to, gameid } = route.params;
+  const { assetId, from, to, gameid, matchInfo } = route.params;
 
   const videoRef = useRef(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -69,11 +70,26 @@ export default function VideoScreen() {
           isLooping={false}
         />
         {isPaused && (
-          <View style={styles.playIcon}>
-            <Text style={{ color: '#fff', fontSize: 32 }}>▶️</Text>
-          </View>
-        )}
-      </TouchableOpacity>
+        <View
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: [{ translateX: -25 }, { translateY: -25 }],
+            width: 50,
+            height: 50,
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: 0.8,
+          }}
+        >
+          <Image
+            source={require("../components/images/play-icon.png")}
+            style={{ width: 50, height: 50 }}
+          />
+        </View>
+      )}
+    </TouchableOpacity>
     </View>
   );
 }

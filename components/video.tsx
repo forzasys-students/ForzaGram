@@ -309,6 +309,8 @@ export default function VideoPlayer({
             height: 50,
             alignItems: "center",
             justifyContent: "center",
+            opacity: 0.5,
+
           }}
         >
           <Image

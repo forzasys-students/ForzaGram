@@ -8,7 +8,8 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { FontAwesome } from '@expo/vector-icons';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import EventCard from '../components/EventCard';
@@ -25,6 +26,7 @@ export default function Timeline() {
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>('all');
+  const navigation = useNavigation<TimelineRouteProp>();
   const routes = [
     { key: 'top', title: 'Top Events' },
     { key: 'full', title: 'Full Events' },
@@ -79,7 +81,13 @@ export default function Timeline() {
       }));
 
     return (
-      <EventList events={topEvents} />
+      <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
+        {topEvents.length > 0
+          ? topEvents.map((event, index) => (
+            <EventItem key={index} event={event} matchInfo={matchInfo} />
+          ))
+          : <Text style={styles.noEventsText}>No Top Events</Text>}
+      </ScrollView>
     );
   };
 
@@ -90,11 +98,22 @@ export default function Timeline() {
         <FilterBar selected={selectedFilter} onChange={setSelectedFilter} />
         {filteredEvents.length > 0
           ? filteredEvents.map((event, index) => (
-              <EventItem key={index} event={event} matchInfo={matchInfo} />
-            ))
+            <EventItem key={index} event={event} matchInfo={matchInfo} />
+          ))
           : <Text style={styles.noEventsText}>No Events Available</Text>}
       </ScrollView>
     );
+  };
+
+  const getGoalScorers = () => {
+    const goals = filterEvents(events, 'goals');
+    return goals.map(goal => {
+      const scorer = goal?.tag?.scorer?.value || 'Unknown Scorer';
+      const teamId = goal?.tag?.team?.id || 'Unknown Team ID';
+      const shotType = goal?.tag?.['shot type']?.value || 'Unknown Shot Type';
+      const gameTime = goal?.game_time;
+      return { scorer, teamId, shotType, gameTime };
+    });
   };
 
   const renderScene = SceneMap({
@@ -124,15 +143,15 @@ export default function Timeline() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <MatchHeader matchInfo={matchInfo} />
+    <View style={{ flex: 1, backgroundColor: '#ebebeb' }}>
+      <MatchHeader matchInfo={matchInfo} getGoalScorers={getGoalScorers} />
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
         renderTabBar={renderTabBar}
         onIndexChange={setIndex}
         initialLayout={initialLayout}
-        style={{ flex: 1 }}
+        style={{ flex: 1, margin: 10, borderRadius: 15, overflow: 'hidden', backgroundColor: '#fff' }}
       />
     </View>
   );
@@ -146,34 +165,168 @@ const LoadingIndicator = () => (
   </View>
 );
 
-const MatchHeader = ({ matchInfo }: { matchInfo: any }) => (
-  <View>
-    <View style={styles.header}>
-      <Text style={{ fontWeight: 'bold', fontSize: 15 }}>{matchInfo.home_team.short_name}</Text>
-      <Image source={{ uri: matchInfo.home_team.logo_url }} style={styles.logo} />
-      <Text style={styles.score}>
-        {matchInfo.home_team_goals} - {matchInfo.visiting_team_goals}
-      </Text>
-      <Image source={{ uri: matchInfo.visiting_team.logo_url }} style={styles.logo} />
-      <Text style={{ fontWeight: 'bold', fontSize: 15 }}>{matchInfo.visiting_team.short_name}</Text>
+const MatchHeader = ({ matchInfo, getGoalScorers }: { matchInfo: any; getGoalScorers: () => { scorer: string; teamId: string; shotType: string; gameTime: number }[] }) => {
+  const navigation = useNavigation<TimelineRouteProp>();
+  return (
+    <View>
+      <View style={styles.header}>
+        <View style={{ alignItems: 'center' }}>
+          <Image source={{ uri: matchInfo.home_team.logo_url }} style={styles.logo} />
+          <Text style={{ fontWeight: 'bold', fontSize: 15, textAlign: 'center' }}>
+            {matchInfo.home_team.short_name}
+          </Text>
+        </View>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={styles.score}>
+            {matchInfo.home_team_goals} - {matchInfo.visiting_team_goals}
+          </Text>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', top: 3, color: '#262626' }}>
+            {matchInfo.date}
+          </Text>
+        </View>
+        <View style={{ alignItems: 'center' }}>
+
+          <Image source={{ uri: matchInfo.visiting_team.logo_url }} style={styles.logo} />
+          <Text style={{ fontWeight: 'bold', fontSize: 15, textAlign: 'center' }}>{matchInfo.visiting_team.short_name}</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 27, backgroundColor: '#f5f5f5' }}>
+        <View style={{ flex: 1, alignItems: 'flex-end', paddingRight: 15 }}>
+          {getGoalScorers()
+            .filter(goal => goal.teamId === matchInfo.home_team.id)
+            .map((goal, index) => (
+              <Text
+                key={index}
+                style={{
+                  fontSize: 10,
+                  fontWeight: 'bold',
+                  color: '#000',
+                  marginBottom: 5,
+                }}
+              >
+                {goal.shotType.toLowerCase() === 'own goal'
+                  ? `${goal.scorer} (OG) ${Math.floor(goal.gameTime / 60)}'`
+                  : `${goal.scorer} ${Math.floor(goal.gameTime / 60)}'`}
+              </Text>
+            ))}
+        </View>
+        <View>
+          <FontAwesome name="futbol-o" size={12} color="black" />
+        </View>
+        <View style={{ flex: 1, alignItems: 'flex-start', paddingLeft: 12 }}>
+          {getGoalScorers()
+            .filter(goal => goal.teamId === matchInfo.visiting_team.id)
+            .map((goal, index) => (
+              <Text
+                key={index}
+                style={{
+                  fontSize: 10,
+                  fontWeight: 'bold',
+                  color: '#000',
+                  marginBottom: 5,
+                }}
+              >
+                {goal.shotType.toLowerCase() === 'own goal'
+                  ? `${goal.scorer} (OG) ${Math.floor(goal.gameTime / 60)}'`
+                  : `${goal.scorer} ${Math.floor(goal.gameTime / 60)}'`}
+              </Text>
+            ))}
+        </View>
+      </View>
+
+      {/* This section is the same as the above, only that it makes the scorer names not duplicated. */}
+      {/* <View style={{ flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 27, backgroundColor: '#f5f5f5' }}>
+      <View style={{ flex: 1, alignItems: 'flex-start' }}>
+      {Object.entries(
+        getGoalScorers()
+        .filter(goal => goal.teamId === matchInfo.home_team.id)
+        .reduce((acc, goal) => {
+          const key = goal.shotType.toLowerCase() === 'own goal' ? `${goal.scorer} (OG)` : goal.scorer;
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(Math.floor(goal.gameTime / 60));
+          return acc;
+        }, {} as Record<string, number[]>)
+      ).map(([scorer, times], index) => (
+        <Text
+        key={index}
+        style={{
+          fontSize: 12,
+          fontWeight: 'bold',
+          color: '#000',
+          marginBottom: 5,
+        }}
+        >
+        {`${scorer} ${times.map(time => `${time}'`).join(', ')}`}
+        </Text>
+      ))}
+      </View>
+      <View>
+      <FontAwesome name="futbol-o" size={12} color="black" />
+      </View>
+      <View style={{ flex: 1, alignItems: 'flex-end' }}>
+      {Object.entries(
+        getGoalScorers()
+        .filter(goal => goal.teamId === matchInfo.visiting_team.id)
+        .reduce((acc, goal) => {
+          const key = goal.shotType.toLowerCase() === 'own goal' ? `${goal.scorer} (OG)` : goal.scorer;
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(Math.floor(goal.gameTime / 60));
+          return acc;
+        }, {} as Record<string, number[]>)
+      ).map(([scorer, times], index) => (
+        <Text
+        key={index}
+        style={{
+          fontSize: 12,
+          fontWeight: 'bold',
+          color: '#000',
+          marginBottom: 5,
+        }}
+        >
+        {`${scorer} ${times.map(time => `${time}'`).join(', ')}`}
+        </Text>
+      ))}
+      </View>
+    </View> */}
+
+
+
+      {/* <View style={styles.matchInfo}> */}
+        {/* <View>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: 'bold',
+              color: '#1d51a3',
+              textAlign: 'center',
+              marginVertical: 10,
+            }}
+            onPress={() => {
+              // Assuming you have a navigation prop or useNavigation hook
+              // Replace 'Lineup' with the actual route name for the lineup screen
+              navigation.navigate('Lineup', { gameid: matchInfo.id });
+            }}
+          >
+            View Lineup
+          </Text>
+        </View> */}
+        {/* <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>
+          Stadium: {matchInfo.stadium_name}
+        </Text>
+        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>
+          Tournament: {matchInfo.tournament_name}
+        </Text>
+      </View> */}
     </View>
-    <View style={styles.matchInfo}>
-      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>
-        Stadium: {matchInfo.stadium_name}
-      </Text>
-      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1d51a3' }}>
-        Tournament: {matchInfo.tournament_name}
-      </Text>
-    </View>
-  </View>
-);
+  );
+}
 
 const EventList = ({ events }: { events: any[] }) => (
   <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
     {events.length > 0
       ? events.map((event, index) => (
-          <EventItem key={index} event={event} matchInfo={null} />
-        ))
+        <EventItem key={index} event={event} matchInfo={null} />
+      ))
       : <Text style={styles.noEventsText}>No Top Events</Text>}
   </ScrollView>
 );
@@ -206,7 +359,13 @@ const EventItem = ({ event, matchInfo }: { event: any; matchInfo: any }) => {
   const scorer = tag?.scorer?.value || tag?.player?.value || undefined;
   const keeper = tag?.keeper?.value || tag?.player?.value || undefined;
   const assist = tag?.['assist by']?.value ?? null;
+  const shotType = tag?.['shot type']?.value || undefined;
   const team = tag?.team?.value ?? undefined;
+  const teamId = tag?.team?.id ?? undefined;
+  const result = event?.score ?? undefined;
+  const substitution_in = tag?.['player in']?.value || undefined;
+  const substitution_out = tag?.['player out']?.value || undefined;
+
 
   if (!assetId || !from || !to || !eventType) return null;
 
@@ -216,6 +375,7 @@ const EventItem = ({ event, matchInfo }: { event: any; matchInfo: any }) => {
 
   return (
     <EventCard
+      matchInfo={matchInfo}
       assetId={assetId}
       from={from}
       to={to}
@@ -224,10 +384,17 @@ const EventItem = ({ event, matchInfo }: { event: any; matchInfo: any }) => {
       keeper={keeper}
       assist={assist}
       team={team}
+      teamId={teamId}
       gametime={gametime}
       imageLogo={imageLogo}
       homeTeam={matchInfo?.home_team.name}
       visiting_team={matchInfo?.visiting_team.name}
+      homeTeamId={matchInfo?.home_team.id}
+      visitingTeamId={matchInfo?.visiting_team.id}
+      shotType={shotType}
+      result={result}
+      substitution_in={substitution_in}
+      substitution_out={substitution_out}
     />
   );
 };
@@ -243,22 +410,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 30,
     backgroundColor: '#f5f5f5',
   },
   logo: {
-    width: 50,
-    height: 50,
+    width: 70,
+    height: 70,
+    marginBottom: 10,
     resizeMode: 'contain',
     marginHorizontal: 10,
   },
   score: {
-    fontSize: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    fontSize: 55,
     fontWeight: 'bold',
-    borderRadius: 40,
-    backgroundColor: '#c0c0c0',
+    bottom: 8,
+    color: '#292929',
   },
   matchInfo: {
     padding: 12,

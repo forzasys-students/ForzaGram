@@ -76,12 +76,16 @@ export default function Fixtures() {
             });
     }, []);
 
-    const handleNavigateToTimeline = () => {
-        ;
+    const handleNavigateToTimeline = (gameid: string) => {
+        navigation.navigate("Timeline", { gameid: gameid });
     };
 
     if (loading) {
-        return <ActivityIndicator size="large" color="#0000ff" />;
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
     }
 
     return (
@@ -103,7 +107,7 @@ export default function Fixtures() {
                     //     }}
                     // >
                     <TouchableOpacity
-                        onPress={() => navigation.navigate("Timeline", { gameid: fixture.gameid })}
+                        onPress={() => handleNavigateToTimeline(fixture.gameid)}
                         key={index}
                         style={{
                             flexDirection: 'row',
