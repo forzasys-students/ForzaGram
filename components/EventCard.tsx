@@ -65,10 +65,293 @@ export default function EventCard({
     UIManager.setLayoutAnimationEnabledExperimental &&
       UIManager.setLayoutAnimationEnabledExperimental(true);
   }
-  const toggleExpand = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(!expanded);
+  
+  const HomeTeamEvents = () => {
+    return (
+      <>
+
+        {/* Event type and match minute */}
+        <View style={styles.homeTeam_Event_and_Time}>
+          <Text style={styles.minute}>{matchMinute}</Text>
+
+          {/* Event Icon or Label */}
+          {eventType.toLowerCase() === 'goal' ? (
+            <View style={{ paddingHorizontal: 10 }}>
+              <FontAwesome
+                name="futbol-o"
+                size={13}
+                color={shotType?.toLowerCase() === 'own goal' ? 'red' : 'black'}
+              />
+            </View>
+
+            // In case of a yellow card
+          ) : eventType.toLowerCase() === 'yellow card' ? (
+            <View style={styles.yellowCard} />
+
+            // In case of a red card
+          ) : eventType.toLowerCase() === 'red card' ? (
+            <View style={styles.redCard} />
+
+            // In case of a medical treatment
+          ) : eventType.toLowerCase() === 'medical treatment' ? (
+            <View style={{ paddingHorizontal: 10 }}>
+              <FontAwesome
+                name="medkit"
+                size={15}
+                color="red"
+              />
+            </View>
+
+            // In case of a substitution
+          ) : eventType.toLowerCase() === 'substitution' ? (
+            <View style={{ paddingHorizontal: 10 }}>
+              <Substitution
+                substitution_in={substitution_in}
+                substitution_out={substitution_out}
+                align="left"
+              />
+            </View>
+          ) : (
+
+            // In case of other events than the ones mentioned above
+            <Text style={[
+              styles.otherEvent, {
+                alignSelf: 'flex-start'
+              }
+            ]}>
+              {eventType.toUpperCase()}
+            </Text>
+          )}
+        </View>
+
+
+        {/*event section*/}
+        <View style={styles.homeTeamEventSection}>
+
+          {/* In case a player name is included in the event*/}
+          {scorer != null ? (
+            <View style={[styles.scorer, { justifyContent: 'flex-start' }]}>
+
+
+              {/* Button to show a video of the event */}
+              <TouchableOpacity onPress={handlePress}>
+                <View style={[eventType.toLowerCase() === 'goal' ? styles.eventButtonGoal : styles.eventButton, { marginRight: 7 }]}>
+                  <Text>
+                    <FontAwesome name="play" size={13} color="black" />
+
+                    {/* In case it's a goal, show the new score */}
+                    {eventType.toLowerCase() === 'goal' && (
+                      <>
+                        {' '}{result?.split('-')[0]} -
+                        <Text style={styles.boldGoal}> {result?.split('-')[1]}</Text>
+                      </>
+                    )}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Player name */}
+              <Text style={[styles.playerName, { textAlign: 'left' }]}>{scorer}</Text>
+            </View>
+          ) : (
+
+            // Buttons to other events than a goal
+
+            <View style={styles.eventButtonPosition}>
+              <TouchableOpacity onPress={handlePress}>
+                <View style={[styles.eventButton]}>
+                  <FontAwesome name="play" size={13} color="black" />
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Include the shot type in case of a shot.
+           include the shot type and the player the assist made by in case of a goal*/}
+          {(assist || (shotType && shotType !== 'standard')) && (
+            <Text style={styles.eventDetails}>
+              {shotType && shotType !== 'standard' && (
+                <Text
+                  style={[
+                    styles.eventDetails,
+                    { color: shotType.toLowerCase() === 'own goal' ? 'red' : '#000' }
+                  ]}
+                >
+                  {shotType.charAt(0).toUpperCase() + shotType.slice(1)}
+                </Text>
+              )}
+              {assist && (
+                <>
+                  {shotType && shotType !== 'standard' && ', '}
+                  Assist by:{' '}
+                  <Text style={styles.eventDetails}>
+                    {assist.charAt(0).toUpperCase() + assist.slice(1)}
+                  </Text>
+                </>
+              )}
+            </Text>
+          )}
+        </View>
+
+
+      </>
+    )
   }
+
+  const VisitingTeamEvents = () => {
+    return (
+      <>
+        {/*event section*/}
+        <View style={styles.visitingTeamEventSection}>
+
+          {/* In case a player name is included in the event*/}
+          {scorer != null ? (
+            <View style={[styles.scorer, { justifyContent: 'flex-end' }]}>
+
+
+
+              {/* Player name */}
+              <Text style={[styles.playerName, { textAlign: 'right' }]}>{scorer}</Text>
+
+              {/* Button to show a video of the event */}
+              <TouchableOpacity onPress={handlePress}>
+                <View style={[eventType.toLowerCase() === 'goal' ? styles.eventButtonGoal : styles.eventButton, { marginLeft: 7 }]}>
+                  <Text>
+                    <FontAwesome name="play" size={13} color="black" />
+
+                    {/* In case it's a goal, show the new score */}
+                    {eventType.toLowerCase() === 'goal' && (
+                      <>
+                        {' '}{result?.split('-')[0]} -
+                        <Text style={styles.boldGoal}> {result?.split('-')[1]}</Text>
+                      </>
+                    )}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          ) : (
+
+            // Buttons to other events than a goal
+            <View style={styles.eventButtonPosition}>
+              <TouchableOpacity onPress={handlePress}>
+                <View style={[styles.eventButton]}>
+                  <FontAwesome name="play" size={13} color="black" />
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Include the shot type in case of a shot.
+           include the shot type and the player the assist made by in case of a goal*/}
+          {(assist || (shotType && shotType !== 'standard')) && (
+            <Text style={[styles.eventDetails, { marginBottom: assist || shotType ? 2 : 0 }]}>
+              {shotType && shotType !== 'standard' && (
+                <Text
+                  style={[
+                    styles.eventDetails,
+                    { color: '#000', textAlign: 'right' },
+                  ]}
+                >
+                  {shotType.charAt(0).toUpperCase() + shotType.slice(1)}
+                </Text>
+              )}
+              {assist && shotType && shotType !== 'standard' && ', '}
+              {assist && (
+                <Text>
+                  Assist by:{' '}
+                  <Text style={styles.eventDetails}>
+                    {assist.charAt(0).toUpperCase() + assist.slice(1)}
+                  </Text>
+                </Text>
+              )}
+            </Text>
+          )}
+        </View>
+
+        {/* Event type and match minute */}
+        <View style={styles.visitingTeam_Event_and_Time}>
+
+          {/*In case of a goal*/}
+          {eventType.toLowerCase() === 'goal' ? (
+            <View style={{ paddingHorizontal: 15, alignSelf: 'flex-end', top: 2 }}>
+              <FontAwesome
+                name="futbol-o"
+                size={13}
+                color={shotType?.toLowerCase() === 'own goal' ? 'red' : 'black'}
+              />
+            </View>
+          )
+            // In case of a yellow card
+            : eventType.toLowerCase() === 'yellow card' ? (
+              <View style={styles.yellowCard} />
+            )
+              // In case of a red card
+              : eventType.toLowerCase() === 'red card' ? (
+                <View style={styles.redCard} />
+              )
+
+                // In case of a medical treatment
+                : eventType.toLowerCase() === 'medical treatment' ? (
+                  <View style={{ paddingHorizontal: 15, alignSelf: 'flex-end', top: 2 }}>
+                    <FontAwesome
+                      name="medkit"
+                      size={15}
+                      color="red"
+                    />
+                  </View>
+                )
+
+                  // In case of a substitution
+                  : eventType.toLowerCase() === 'substitution' ? (
+                    <View style={{ paddingHorizontal: 15, alignSelf: 'flex-end', top: 2 }}>
+                      <Substitution
+                        substitution_in={substitution_in}
+                        substitution_out={substitution_out}
+                        align='right'
+                      />
+                    </View>
+                  ) : (
+
+                    // In case of other events than the ones mentioned above
+                    <Text style={[
+                      styles.otherEvent, {
+                        alignSelf: 'flex-end',
+                      }
+                    ]}>
+                      {eventType.toUpperCase()}
+                    </Text>
+                  )}
+
+          {/* Match minute */}
+          <Text style={styles.minute}>{matchMinute}</Text>
+        </View>
+      </>
+    )
+  }
+  const NeutralEvents = () => {
+    return (
+      <>
+        <View style={styles.neturalEventContainer}>
+          <View style={styles.neutralEventLine} />
+          <Text style={styles.neutralEventText}>
+            {eventType.toLowerCase() === 'end phase' ? 'Half Time'
+              : eventType.toLowerCase() === 'end of game' ? 'Full Time'
+                : eventType.toUpperCase()}
+          </Text>
+          <Text style={styles.minute}>
+            {' '}
+            {eventType === 'end phase'
+              ? `45 + ${Math.floor(parseInt(matchMinute, 10)) - 45}'`
+              : `90 + ${Math.floor(parseInt(matchMinute, 10)) - 90}'`}
+            {' '}
+          </Text>
+          <View style={styles.neutralEventLine} />
+        </View>
+      </>
+    )
+  }
+
 
   const Substitution = ({ substitution_in, substitution_out, align }: { substitution_in?: string; substitution_out?: string, align: string }) => {
     const alignment = align === 'left' ? 'flex-start' : 'flex-end';
@@ -77,20 +360,33 @@ export default function EventCard({
     return (
       <View style={{ alignSelf: alignment, flexDirection: 'column', }}>
 
-        <View style={{ flexDirection: 'row', justifyContent: alignment, marginBottom: 2 }}>
-          {align === 'left' && <FontAwesome name={playerInArrow} size={13} color="green" style={{ paddingRight: 10, alignSelf: alignment, top: 2 }} />}
-          <Text style={[styles.detailsText, { fontSize: 14, color: 'green' }]}>
+        <View style={[styles.substitutionContainer, { justifyContent: alignment }]}>
+
+          {/*Player in, and suitable arrow*/}
+          {align === 'left' && <FontAwesome name={playerInArrow} size={13} color="green"
+            style={styles.substitutionHomeArrow} />}
+
+          {/* Player in name */}
+          <Text style={[styles.playerName, styles.substitutionPlayerIn]}>
             {substitution_in}
           </Text>
-          {align === 'right' && <FontAwesome name={playerInArrow} size={13} color="green" style={{ paddingLeft: 10, alignSelf: alignment, bottom: 2 }} />}
+
+          {align === 'right' && <FontAwesome name={playerInArrow} size={13} color="green"
+            style={styles.substitutionVisitingArrow} />}
         </View>
 
-        <View style={{ flexDirection: 'row', justifyContent: alignment, marginBottom: 5 }}>
-          {align === 'left' && <FontAwesome name={playerOutArrow} size={13} color="red" style={{ paddingRight: 10, alignSelf: alignment, top: 2 }} />}
-          <Text style={[styles.detailsText, { fontSize: 14, color: 'red' }]}>
+        {/*Player out, and suitable arrow*/}
+        <View style={[styles.substitutionContainer, { justifyContent: alignment }]}>
+          {align === 'left' && <FontAwesome name={playerOutArrow} size={13} color="red"
+            style={styles.substitutionHomeArrow} />}
+
+          {/* Player out name */}
+          <Text style={[styles.playerName, styles.substitutionPlayerOut]}>
             {substitution_out}
           </Text>
-          {align === 'right' && <FontAwesome name={playerOutArrow} size={13} color="red" style={{ paddingLeft: 10, alignSelf: alignment, bottom: 2 }} />}
+
+          {align === 'right' && <FontAwesome name={playerOutArrow} size={13} color="red"
+            style={styles.substitutionVisitingArrow} />}
 
         </View>
       </View>
@@ -98,276 +394,26 @@ export default function EventCard({
     );
   }
 
-  //console.log('her is the log ' + imageLogo);
-  //console.log('assitId ' + assetId)
-  //console.log(teamId, homeTeamId, visitingTeamId);
-  //console.log(substitution_in, substitution_out);
+  // Return the component
   return (
+    <View
+      style={
+        [styles.card,
+        {
+          alignSelf: teamId === visitingTeamId ? 'flex-end'
+            : teamId === undefined ? 'center'
+              : 'flex-start'
+        }]}>
+      <View style={styles.eventTypeAndTime}>
+        {teamId === homeTeamId ? (
+          <HomeTeamEvents />
 
-    //   _                          
-    //  | |__   ___  _ __ ___   ___ 
-    //  | '_ \ / _ \| '_ ` _ \ / _ \
-    //  | | | | (_) | | | | | |  __/
-    //  |_| |_|\___/|_| |_| |_|\___|
+        ) : teamId === visitingTeamId ? (
+          <VisitingTeamEvents />
 
-
-    <View style={[styles.card, { alignSelf: teamId === visitingTeamId ? 'flex-end' : teamId === undefined ? 'center' : 'flex-start' }]}>
-      <View style={styles.eventDetials}>
-        <View style={styles.eventTypeAndTime}>
-          {teamId === homeTeamId ? (
-            <>
-
-              {/* Event type and match minute */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                <Text style={styles.minute}>{matchMinute}</Text>
-
-                {/* Event Icon or Label */}
-                {eventType.toLowerCase() === 'goal' ? (
-                  <View style={{ paddingHorizontal: 10 }}>
-                    <FontAwesome
-                      name="futbol-o"
-                      size={13}
-                      color={shotType?.toLowerCase() === 'own goal' ? 'red' : 'black'}
-                    />
-                  </View>
-                ) : eventType.toLowerCase() === 'yellow card' ? (
-                  <View style={styles.yellowCard} />
-                ) : eventType.toLowerCase() === 'red card' ? (
-                  <View style={styles.redCard} />
-                ) : eventType.toLowerCase() === 'medical treatment' ? (
-                  <View style={{ paddingHorizontal: 10 }}>
-                    <FontAwesome name="medkit" size={15} color="red" />
-                  </View>
-                ) : eventType.toLowerCase() === 'substitution' ? (
-                  <View style={{ paddingHorizontal: 10 }}>
-                    <Substitution
-                      substitution_in={substitution_in}
-                      substitution_out={substitution_out}
-                      align="left"
-                    />
-                  </View>
-                ) : (
-                  <Text style={{
-                    fontSize: 13,
-                    color: '#1d51a3',
-                    fontWeight: 'bold',
-                    paddingHorizontal: 15,
-                    alignSelf: 'flex-start'
-                  }}>
-                    {eventType.toUpperCase()}
-                  </Text>
-                )}
-              </View>
-
-
-              {/*event section*/}
-              <View style={{ alignSelf: 'flex-start', flexDirection: 'column' }}>
-
-                {/* In case a player name is included in the event*/}
-                {scorer != null ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
-
-
-                    {/* Button to show a video of the event */}
-                    <TouchableOpacity onPress={handlePress}>
-                      <View style={[eventType.toLowerCase() === 'goal' ? styles.eventButtonGoal : styles.eventButton, { marginRight: 8 }]}>
-                        <Text>
-                          <FontAwesome name="play" size={13} color="black" />
-                          
-                          {/* In case it's a goal, show the new score */}
-                          {eventType.toLowerCase() === 'goal' && (
-                            <>
-                              {' '}{result?.split('-')[0]} -
-                              <Text style={{ fontWeight: 'bold', color: '#1d51a3' }}> {result?.split('-')[1]}</Text>
-                            </>
-                          )}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-
-                    {/* Player name */}
-                    <Text style={[styles.detailsText, { textAlign: 'left' }]}>{scorer}</Text>
-                  </View>
-                ) : (
-
-                  // Button to show a video of the event in a case a scorer doesn't exist
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
-                    <TouchableOpacity onPress={handlePress}>
-                      <View style={[styles.eventButton]}>
-                        <FontAwesome name="play" size={13} color="black" />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {(assist || (shotType && shotType !== 'standard')) && (
-                  <Text style={styles.detailsTextInn}>
-                    {shotType && shotType !== 'standard' && (
-                      <Text
-                        style={[
-                          styles.detailsTextInn,
-                          { color: shotType.toLowerCase() === 'own goal' ? 'red' : '#000' }
-                        ]}
-                      >
-                        {shotType.charAt(0).toUpperCase() + shotType.slice(1)}
-                      </Text>
-                    )}
-                    {assist && (
-                      <>
-                        {shotType && shotType !== 'standard' && ', '}
-                        Assist by:{' '}
-                        <Text style={styles.detailsTextInn}>
-                          {assist.charAt(0).toUpperCase() + assist.slice(1)}
-                        </Text>
-                      </>
-                    )}
-                  </Text>
-                )}
-              </View>
-
-
-            </>
-
-
-
-            //   __ ___      ____ _ _   _ 
-            //  / _` \ \ /\ / / _` | | | |
-            // | (_| |\ V  V / (_| | |_| |
-            //  \__,_| \_/\_/ \__,_|\__, |
-            //                      |___/ 
-
-          ) : teamId === visitingTeamId ? (
-            <>
-
-              {/*event section*/}
-              <View style={{ alignSelf: 'flex-end', flexDirection: 'column', top: 2 }}>
-
-                {/* In case a player name is included in the event*/}
-                {scorer != null ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' }}>
-
-
-
-                    {/* Player name */}
-                    <Text style={[styles.detailsText, { textAlign: 'right' }]}>{scorer}</Text>
-
-                    {/* Button to show a video of the event */}
-                    <TouchableOpacity onPress={handlePress}>
-                      <View style={[eventType.toLowerCase() === 'goal' ? styles.eventButtonGoal : styles.eventButton, { marginLeft: 7 }]}>
-                        <Text>
-                          <FontAwesome name="play" size={13} color="black" />
-
-                          {/* In case it's a goal, show the new score */}
-                          {eventType.toLowerCase() === 'goal' && (
-                            <>
-                              {' '}{result?.split('-')[0]} -
-                              <Text style={{ fontWeight: 'bold', color: '#1d51a3' }}> {result?.split('-')[1]}</Text>
-                            </>
-                          )}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-
-                  // Button to show a video of the event in a case a scorer doesn't exist
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
-                    <TouchableOpacity onPress={handlePress}>
-                      <View style={[styles.eventButton]}>
-                        <FontAwesome name="play" size={13} color="black" />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {/* In case of a goal, include the type and the player the assist made by*/}
-                {(assist || (shotType && shotType !== 'standard')) && (
-                  <Text style={[styles.detailsTextInn, { marginBottom: assist || shotType ? 2 : 0 }]}>
-                    {shotType && shotType !== 'standard' && (
-                      <Text
-                        style={[
-                          styles.detailsTextInn,
-                          { color: '#000', textAlign: 'right' },
-                        ]}
-                      >
-                        {shotType.charAt(0).toUpperCase() + shotType.slice(1)}
-                      </Text>
-                    )}
-                    {assist && shotType && shotType !== 'standard' && ', '}
-                    {assist && (
-                      <Text>
-                        Assist by:{' '}
-                        <Text style={styles.detailsTextInn}>
-                          {assist.charAt(0).toUpperCase() + assist.slice(1)}
-                        </Text>
-                      </Text>
-                    )}
-                  </Text>
-                )}
-              </View>
-
-              {/* Event type and match minute */}
-              <View style={{ flexDirection: 'row', height: 15 }}>
-
-                {/*In case of a goal*/}
-                {eventType.toLowerCase() === 'goal' ? (
-                  <View style={{ paddingHorizontal: 15, alignSelf: 'flex-end', top: 2 }}>
-                    <FontAwesome
-                      name="futbol-o"
-                      size={13}
-                      color={shotType?.toLowerCase() === 'own goal' ? 'red' : 'black'}
-                    />
-                  </View>
-                )
-                  // In case of a yellow card
-                  : eventType.toLowerCase() === 'yellow card' ? (
-                    <View style={styles.yellowCard} />
-                  )
-                    // In case of a red card
-                    : eventType.toLowerCase() === 'red card' ? (
-                      <View style={styles.redCard} />
-                    )
-
-                      // In case of a medical treatment
-                      : eventType.toLowerCase() === 'medical treatment' ? (
-                        <View style={{ paddingHorizontal: 15, alignSelf: 'flex-end', top: 2 }}>
-                          <FontAwesome
-                            name="medkit"
-                            size={15}
-                            color="red"
-                          />
-                        </View>
-                      )
-
-                        // In case of a substitution
-                        : eventType.toLowerCase() === 'substitution' ? (
-                          <View style={{ paddingHorizontal: 15, alignSelf: 'flex-end', top: 2 }}>
-                            <Substitution substitution_in={substitution_in} substitution_out={substitution_out} align='right' />
-                          </View>
-                        )
-                          : (
-                            <Text style={{ fontSize: 13, color: '#1d51a3', fontWeight: 'bold', paddingHorizontal: 15, alignSelf: 'flex-end' }}>
-                              {eventType.toUpperCase()}
-                            </Text>
-                          )}
-                <Text style={styles.minute}>{matchMinute}</Text>
-              </View>
-            </>
-          ) : (
-            <>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                <View style={{ flex: 1, height: 1, backgroundColor: '#1d51a3', marginRight: 10 }} />
-                <Text style={{ fontSize: 13, color: '#1d51a3', fontWeight: 'bold', alignSelf: 'center' }}>{eventType.toUpperCase()}</Text>
-                <Text style={styles.minute}>{' '}
-                {parseInt(matchMinute, 10) <= 60 
-                  ? `45 + ${Math.floor(parseInt(matchMinute, 10) ) - 45}'`
-                  : `90 + ${Math.floor(parseInt(matchMinute, 10)) - 90}'`}</Text>
-                <View style={{ flex: 1, height: 1, backgroundColor: '#1d51a3', marginLeft: 10 }} />
-                </View>
-            </>
-          )}
-        </View>
+        ) : (
+          <NeutralEvents />
+        )}
       </View>
       <View >
       </View>
@@ -377,7 +423,6 @@ export default function EventCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
     padding: 8,
     marginHorizontal: 5,
     marginVertical: 4,
@@ -396,6 +441,37 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#1d51a3',
     fontWeight: 'bold',
+  },
+  homeTeamEventSection: {
+    alignSelf: 'flex-start',
+    flexDirection: 'column',
+  },
+  visitingTeamEventSection: {
+    alignSelf: 'flex-end',
+    flexDirection: 'column',
+    top: 2,
+  },
+  homeTeam_Event_and_Time: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  visitingTeam_Event_and_Time: {
+    flexDirection: 'row',
+    height: 15
+  },
+  scorer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  boldGoal: {
+    fontWeight: 'bold',
+    color: '#1d51a3',
+  },
+  eventButtonPosition: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   eventButton: {
     borderWidth: 1.5,
@@ -432,19 +508,56 @@ const styles = StyleSheet.create({
     borderColor: "#000",
     marginHorizontal: 15,
   },
-  detailsDown: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
+  otherEvent: {
+    fontSize: 13,
+    color: '#1d51a3',
+    fontWeight: 'bold',
+    paddingHorizontal: 15,
   },
-  detailsText: {
+  playerName: {
     fontSize: 13,
     fontWeight: 'bold',
   },
-  detailsTextInn: {
+  eventDetails: {
     fontSize: 13,
     fontWeight: 'condensed'
-  }
+  },
+
+  neturalEventContainer: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center'
+  },
+  neutralEventLine: {
+    flex: 1, height: 1, backgroundColor: '#1d51a3', marginRight: 10
+  },
+  neutralEventText: {
+    fontSize: 13, color: '#1d51a3', fontWeight: 'bold', alignSelf: 'center'
+  },
+  substitutionContainer: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  substitutionHomeArrow: {
+    paddingRight: 10,
+    alignSelf: 'flex-start',
+    top: 2,
+  },
+  substitutionVisitingArrow: {
+    paddingLeft: 10,
+    alignSelf: 'flex-end',
+    bottom: 2,
+  },
+  substitutionPlayerIn: {
+    fontSize: 13,
+    color: 'green',
+    paddingLeft: 5,
+  },
+  substitutionPlayerOut: {
+    fontSize: 13,
+    color: 'red',
+    paddingLeft: 5,
+  },
+
+
 });
 
 
