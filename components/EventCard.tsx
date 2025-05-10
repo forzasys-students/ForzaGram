@@ -1,15 +1,16 @@
 // components/EventCard.tsx
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet, View, LayoutAnimation, Platform, UIManager, Image } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View, Platform, UIManager } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/RootNavigator';
+import { RootStackParamList } from '../navigation/RootNavigator.js';
 import { FontAwesome } from '@expo/vector-icons';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'VideoScreen'>;
 
 
 interface Props {
+  matchInfo: any;
   assetId: number;
   from: number;
   to: number;
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export default function EventCard({
+  matchInfo,
   assetId,
   from,
   to,
@@ -58,6 +60,8 @@ export default function EventCard({
       assetId,
       from,
       to,
+      matchInfo,
+      
     });
   };
 
@@ -65,7 +69,7 @@ export default function EventCard({
     UIManager.setLayoutAnimationEnabledExperimental &&
       UIManager.setLayoutAnimationEnabledExperimental(true);
   }
-  
+
   const HomeTeamEvents = () => {
     return (
       <>
@@ -86,15 +90,15 @@ export default function EventCard({
 
             // In case of a yellow card
           ) : eventType.toLowerCase() === 'yellow card' ? (
-            <View style={styles.yellowCard} />
+            <View style={styles.yellowCard} testID='yellow-card'/>
 
             // In case of a red card
           ) : eventType.toLowerCase() === 'red card' ? (
-            <View style={styles.redCard} />
+            <View style={styles.redCard} testID='red-card'/>
 
             // In case of a medical treatment
           ) : eventType.toLowerCase() === 'medical treatment' ? (
-            <View style={{ paddingHorizontal: 10 }}>
+            <View style={{ paddingHorizontal: 10 }} testID='medical-treatment'> 
               <FontAwesome
                 name="medkit"
                 size={15}
@@ -134,7 +138,7 @@ export default function EventCard({
 
 
               {/* Button to show a video of the event */}
-              <TouchableOpacity onPress={handlePress}>
+              <TouchableOpacity onPress={handlePress} testID="event-play-button">
                 <View style={[eventType.toLowerCase() === 'goal' ? styles.eventButtonGoal : styles.eventButton, { marginRight: 7 }]}>
                   <Text>
                     <FontAwesome name="play" size={13} color="black" />
@@ -142,8 +146,8 @@ export default function EventCard({
                     {/* In case it's a goal, show the new score */}
                     {eventType.toLowerCase() === 'goal' && (
                       <>
-                        {' '}{result?.split('-')[0]} -
-                        <Text style={styles.boldGoal}> {result?.split('-')[1]}</Text>
+                        {' '}<Text style={styles.boldGoal}>{result?.split('-')[0]}</Text> -{' '}
+                         {result?.split('-')[1]}
                       </>
                     )}
                   </Text>
@@ -158,7 +162,7 @@ export default function EventCard({
             // Buttons to other events than a goal
 
             <View style={styles.eventButtonPosition}>
-              <TouchableOpacity onPress={handlePress}>
+              <TouchableOpacity onPress={handlePress} testID="event-play-button">
                 <View style={[styles.eventButton]}>
                   <FontAwesome name="play" size={13} color="black" />
                 </View>
@@ -169,12 +173,11 @@ export default function EventCard({
           {/* Include the shot type in case of a shot.
            include the shot type and the player the assist made by in case of a goal*/}
           {(assist || (shotType && shotType !== 'standard')) && (
-            <Text style={styles.eventDetails}>
+            <Text style={[styles.eventDetails, {paddingLeft: 8}]}>
               {shotType && shotType !== 'standard' && (
                 <Text
                   style={[
                     styles.eventDetails,
-                    { color: shotType.toLowerCase() === 'own goal' ? 'red' : '#000' }
                   ]}
                 >
                   {shotType.charAt(0).toUpperCase() + shotType.slice(1)}
@@ -214,7 +217,7 @@ export default function EventCard({
               <Text style={[styles.playerName, { textAlign: 'right' }]}>{scorer}</Text>
 
               {/* Button to show a video of the event */}
-              <TouchableOpacity onPress={handlePress}>
+              <TouchableOpacity onPress={handlePress} testID="event-play-button">
                 <View style={[eventType.toLowerCase() === 'goal' ? styles.eventButtonGoal : styles.eventButton, { marginLeft: 7 }]}>
                   <Text>
                     <FontAwesome name="play" size={13} color="black" />
@@ -234,7 +237,7 @@ export default function EventCard({
 
             // Buttons to other events than a goal
             <View style={styles.eventButtonPosition}>
-              <TouchableOpacity onPress={handlePress}>
+              <TouchableOpacity onPress={handlePress} testID="event-play-button">
                 <View style={[styles.eventButton]}>
                   <FontAwesome name="play" size={13} color="black" />
                 </View>
@@ -284,16 +287,16 @@ export default function EventCard({
           )
             // In case of a yellow card
             : eventType.toLowerCase() === 'yellow card' ? (
-              <View style={styles.yellowCard} />
+              <View style={styles.yellowCard} testID='yellow-card'/>
             )
               // In case of a red card
               : eventType.toLowerCase() === 'red card' ? (
-                <View style={styles.redCard} />
+                <View style={styles.redCard} testID='red-card'/>
               )
 
                 // In case of a medical treatment
                 : eventType.toLowerCase() === 'medical treatment' ? (
-                  <View style={{ paddingHorizontal: 15, alignSelf: 'flex-end', top: 2 }}>
+                  <View style={{ paddingHorizontal: 15, alignSelf: 'flex-end', top: 2 }} testID='medical-treatment'>
                     <FontAwesome
                       name="medkit"
                       size={15}
@@ -353,21 +356,21 @@ export default function EventCard({
   }
 
 
-  const Substitution = ({ substitution_in, substitution_out, align }: { substitution_in?: string; substitution_out?: string, align: string }) => {
+  const Substitution = ({ substitution_in, substitution_out, align, testID }: { substitution_in?: string; substitution_out?: string, align: string, testID?: string }) => {
     const alignment = align === 'left' ? 'flex-start' : 'flex-end';
     const playerInArrow = align === 'left' ? 'arrow-right' : 'arrow-left';
     const playerOutArrow = align === 'left' ? 'arrow-left' : 'arrow-right';
     return (
-      <View style={{ alignSelf: alignment, flexDirection: 'column', }}>
+      <View style={{ alignSelf: alignment, flexDirection: 'column', }} testID='substitution'>
 
-        <View style={[styles.substitutionContainer, { justifyContent: alignment }]}>
+        <View style={[styles.substitutionContainer, { justifyContent: alignment }]} >
 
           {/*Player in, and suitable arrow*/}
           {align === 'left' && <FontAwesome name={playerInArrow} size={13} color="green"
             style={styles.substitutionHomeArrow} />}
 
           {/* Player in name */}
-          <Text style={[styles.playerName, styles.substitutionPlayerIn]}>
+          <Text style={[styles.playerName, styles.substitutionPlayerIn]} testID='substitution-in'>
             {substitution_in}
           </Text>
 
@@ -376,12 +379,12 @@ export default function EventCard({
         </View>
 
         {/*Player out, and suitable arrow*/}
-        <View style={[styles.substitutionContainer, { justifyContent: alignment }]}>
+        <View style={[styles.substitutionContainer, { justifyContent: alignment }]} >
           {align === 'left' && <FontAwesome name={playerOutArrow} size={13} color="red"
             style={styles.substitutionHomeArrow} />}
 
           {/* Player out name */}
-          <Text style={[styles.playerName, styles.substitutionPlayerOut]}>
+          <Text style={[styles.playerName, styles.substitutionPlayerOut]} testID='substitution-out'>
             {substitution_out}
           </Text>
 

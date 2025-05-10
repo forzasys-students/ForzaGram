@@ -16,9 +16,19 @@ import RootNavigator from '@/navigation/RootNavigator.js';
 type FixturesRouteProp = RouteProp<RootStackParamList, 'Fixtures'>;
 
 const googleSheetsDataUrl = "https://sheets.googleapis.com/v4/spreadsheets/15sgdpVXsUMZdmxRdpfuFMc2pj4csPElt2dI7u5P9ROk/values/A2:G?key=AIzaSyCcADeLUsyye03WViRsMDviXjYOsmm-6eY";
+type Fixture = {
+    gameid: string;
+    home_team: any;
+    visiting_team: any;
+    homeTeamLogo: string;
+    visitingTeamLogo: string;
+    homeTeamGoals: number;
+    visitingTeamGoals: number;
+    start_of_1st_half: string;
+  };
 
 export default function Fixtures() {
-    const [fixtures, setFixtures] = useState([]);
+    const [fixtures, setFixtures] = useState<Fixture[]>([]);
     const [loading, setLoading] = useState(true);
     const [games, setGames] = useState([]);
     const navigation = useNavigation<FixturesRouteProp>();
@@ -28,53 +38,64 @@ export default function Fixtures() {
         fetch(googleSheetsDataUrl)
             .then((response) => response.json())
             .then((data) => {
+                if (!data.values || data.values.length === 0) {
+                    console.warn('⚠️ No data received from Google Sheets');
+                    setFixtures([]); 
+                    setLoading(false);
+                    return;
+                }
+    
                 const allGameIds = data.values.map((item) => item[4]);
-
-                // Step 2: Filter only unique gameids
                 const uniqueGameIds = [...new Set(allGameIds)];
-                console.log("✅ Unique Game IDs:", uniqueGameIds);
-
-                // Step 3: Format for your loop
                 const formattedData = uniqueGameIds.map((gameid, index) => ({
                     id: index.toString(),
                     gameid,
                 }));
+    
                 setGames(formattedData);
-                const matchInfoPromises = formattedData.map((game) => {
-                    const gameinfo = fetch(`https://api.forzasys.com/allsvenskan/game/${game.gameid}`)
+    
+                const matchInfoPromises = formattedData.map((game) =>
+                    fetch(`https://api.forzasys.com/allsvenskan/game/${game.gameid}`)
                         .then((response) => response.json())
-                        .then((matchJson) => {
-                            return {
-                                gameid: game.gameid,
-                                home_team: {
-                                    ...matchJson.home_team,
-                                    name: matchJson.home_team.name.length > 10
-                                        ? matchJson.home_team.name.slice(0, 10) + '...'
-                                        : matchJson.home_team.name,
-                                },
-                                visiting_team: {
-                                    ...matchJson.visiting_team,
-                                    name: matchJson.visiting_team.name.length > 10
-                                        ? matchJson.visiting_team.name.slice(0, 10) + '...'
-                                        : matchJson.visiting_team.name,
-                                },
-                                homeTeamLogo: matchJson.home_team.logo_url,
-                                visitingTeamLogo: matchJson.visiting_team.logo_url,
-                                homeTeamGoals: matchJson.home_team_goals,
-                                visitingTeamGoals: matchJson.visiting_team_goals,
-                                start_of_1st_half: matchJson.start_of_1st_half,
-                            };
-                        });
-                    return gameinfo;
-
-                });
+                        .then((matchJson) => ({
+                            gameid: game.gameid,
+                            home_team: {
+                                ...matchJson.home_team,
+                                name: matchJson.home_team.name.length > 10
+                                    ? matchJson.home_team.name.slice(0, 10) + '...'
+                                    : matchJson.home_team.name,
+                            },
+                            visiting_team: {
+                                ...matchJson.visiting_team,
+                                name: matchJson.visiting_team.name.length > 10
+                                    ? matchJson.visiting_team.name.slice(0, 10) + '...'
+                                    : matchJson.visiting_team.name,
+                            },
+                            homeTeamLogo: matchJson.home_team.logo_url,
+                            visitingTeamLogo: matchJson.visiting_team.logo_url,
+                            homeTeamGoals: matchJson.home_team_goals,
+                            visitingTeamGoals: matchJson.visiting_team_goals,
+                            start_of_1st_half: matchJson.start_of_1st_half,
+                        }))
+                        .catch((err) => {
+                            console.error("Failed to fetch match info", err);
+                            return null;
+                        })
+                );
+    
                 Promise.all(matchInfoPromises).then((matchInfo) => {
-                    setFixtures(matchInfo);
-                    console.log(matchInfo);
+                    // Filter out null results in case of fetch errors
+                    setFixtures(matchInfo.filter((f): f is Fixture => f !== null));
                     setLoading(false);
                 });
+            })
+            .catch((error) => {
+                console.error("❌ Error fetching fixtures:", error);
+                setFixtures([]); // Optional: set error state for retry UI
+                setLoading(false);
             });
     }, []);
+    
 
     const handleNavigateToTimeline = (gameid: string) => {
         navigation.navigate("Timeline", { gameid: gameid });

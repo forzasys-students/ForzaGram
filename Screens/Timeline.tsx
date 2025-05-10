@@ -78,7 +78,8 @@ export default function Timeline() {
         const action = event?.tag?.action?.toLowerCase() || '';
         const onTarget = event?.tag?.['on target']?.value?.toLowerCase() || '';
         return action === 'shot' && onTarget === 'yes';
-      }));
+      }))
+      .sort((a, b) => (a.game_time || 0) - (b.game_time || 0)); // Sort by game time (minute)
 
     return (
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
@@ -139,8 +140,19 @@ export default function Timeline() {
   );
 
   if (loading) {
-    return <LoadingIndicator />;
+    return <LoadingIndicator testID="loading-indicator" />;
   }
+
+  if (!matchInfo) {
+    return (
+      <View style={styles.centered}>
+        <Text style={{ fontSize: 16, color: '#999' }}>
+          Error Failed to load match data.
+        </Text>
+      </View>
+    );
+  }
+  
 
   return (
     <View style={{ flex: 1, backgroundColor: '#ebebeb' }}>
@@ -158,8 +170,8 @@ export default function Timeline() {
 }
 
 
-const LoadingIndicator = () => (
-  <View style={styles.centered}>
+const LoadingIndicator = ({ testID }: { testID?: string }) => (
+  <View style={styles.centered} testID={testID}>
     <ActivityIndicator size="large" color="#1d51a3" />
     <Text>Loading timeline...</Text>
   </View>
@@ -349,6 +361,11 @@ const FilterBar = ({ selected, onChange }: { selected: string; onChange: (value:
 );
 
 const EventItem = ({ event, matchInfo }: { event: any; matchInfo: any }) => {
+  if (!event?.tag?.action) {
+    console.warn('Skipping invalid event:', event);
+    return null;
+  }
+
   const subEvent = event?.playlist?.events?.[0];
   const assetId = subEvent?.video_asset_id;
   const from = subEvent?.from_timestamp;
