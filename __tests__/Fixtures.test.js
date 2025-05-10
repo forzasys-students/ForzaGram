@@ -94,4 +94,49 @@ describe('Fixtures Screen', () => {
     expect(fetch.mock.calls[1][0]).toMatch(/game123/);
     expect(fetch.mock.calls[2][0]).toMatch(/game456/);
   });
+
+  it('handles empty data response gracefully', async () => {
+    // Simulate Google Sheets API returning an empty list of values.
+    // This could happen if no games are scheduled or data was deleted.
+    fetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ values: [] }),
+      })
+    );
+  
+    let component;
+    await renderer.act(async () => {
+      // Asynchronously render the component.
+      // The act wrapper ensures all updates from useEffect are flushed before assertions.
+      component = renderer.create(<Fixtures />);
+    });
+  
+    // Confirm the component still renders without crashing, even with no data.
+    expect(component).toBeDefined();
+  
+    // Only one fetch call should occur (the Google Sheets request).
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles fetch error gracefully', async () => {
+    // Simulate a network failure or other fetch error.
+    // This test ensures the component does not crash when an exception is thrown.
+    fetch.mockImplementationOnce(() =>
+      Promise.reject(new Error('Network error'))
+    );
+  
+    let component;
+    await renderer.act(async () => {
+      // Asynchronously render the component.
+      // The error from fetch should be caught in the component and not crash rendering.
+      component = renderer.create(<Fixtures />);
+    });
+  
+    // Component should render without throwing even if fetch fails.
+    expect(component).toBeDefined();
+  
+    // One fetch call is expected (attempt to fetch from Google Sheets).
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+  
 });
