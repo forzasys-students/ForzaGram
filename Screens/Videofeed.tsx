@@ -1,11 +1,19 @@
-import React, { useEffect, useState, useRef } from "react";
-import { View, FlatList, Dimensions, TouchableOpacity, Text, StyleSheet } from "react-native";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import {
+  View,
+  FlatList,
+  Dimensions,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from "@/navigation/RootNavigator";
 
-import VideoPlayer from "../components/video"; 
+import VideoPlayer from "../components/video";
 import FilterBar from "../components/FilterBar";
 
 const pagesize = 10;
@@ -16,98 +24,161 @@ const filterOptions = [
   { id: "2", label: "Goal" },
   { id: "3", label: "Yellow Card" },
   { id: "4", label: "Shot" },
-  
 ];
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Index'>; // later for understanding 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Index'>;
 
 export default function IndexScreen() {
   const navigation = useNavigation<NavigationProp>();
   const flatListRef = useRef<FlatList>(null);
   const [videodata, setVideodata] = useState([]);
   const [displaydata, setDisplaydata] = useState([]);
-  const [selectedFilter, setSelectedFilter] = useState("1"); 
+  const [selectedFilter, setSelectedFilter] = useState("1");
   const [page, setPage] = useState(1);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(googlesheetsdataurl)
-      .then((response) => response.json())
-      .then((data) => {
-        const formattedData = data.values.map((item, index) => ({
-          id: index.toString(),
-          season: item[0],
-          event: item[1].toLowerCase(), 
-          team1: item[2],
-          team2: item[3],
-          gameid: item[4],
-          assedid: item[5],
-          uri: item[6],
-        }));
-        setVideodata(formattedData);
-        setDisplaydata(formattedData.slice(0, pagesize)); 
-        //console.log(formattedData);
-      });
+    const fetchClipsFromGame = async (gameid) => {
+      try {
+        const res = await fetch(`https://api.forzasys.com/allsvenskan/game/${gameid}/events?count=99999`);
+        const data = await res.json();
+        const clips = data.events
+          .filter(event => event.playlist?.video_url)
+          .map((event, index) => ({
+            id: `${gameid}-${event.id}-${index}`, // Unique ID for each event
+            uri: event.playlist.video_url,
+            season: event.playlist.game?.tournament?.name || "Unknown",
+            team1: event.playlist.game?.home_team?.name || "Home",
+            team2: event.playlist.game?.visiting_team?.name || "Away",
+            event: event.tag?.action?.toLowerCase() || "",
+            score: event.score,
+            team: event.tag?.team?.name || "",
+            gameid: gameid
+            
+          }
+        ));
+        
+        return clips;
+      } catch (err) {
+        console.error(`Error fetching events for game ${gameid}:`, err);
+        return [];
+      }
+    };
+
+    const loadGameData = async () => {
+      try {
+        const response = await fetch(googlesheetsdataurl);
+        const sheetData = await response.json();
+      const gameIds = [
+  ...new Set(sheetData.values.map(item => item[4]).filter(Boolean))
+];
+
+        const allClips = await Promise.all(gameIds.map(fetchClipsFromGame));
+        const flattened = allClips.flat();
+        const ids = flattened.map(item => item.id);
+const hasDuplicates = new Set(ids).size !== ids.length;
+
+if (hasDuplicates) {
+  const seen = new Set();
+  const dupes = ids.filter(id => {
+    if (seen.has(id)) return true;
+    seen.add(id);
+    return false;
+  });
+  console.warn("⚠️ Duplicate video IDs found:", dupes);
+}
+
+
+        // Shuffle for variety
+        const shuffled = flattened.sort(() => 0.5 - Math.random());
+
+        setVideodata(shuffled);
+        setDisplaydata(shuffled.slice(0, pagesize));
+      } catch (err) {
+        console.error("Failed to load video feed:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadGameData();
   }, []);
 
   const applyFilter = (filterId) => {
     setSelectedFilter(filterId);
-    let filteredVideos = [];
-  
+    let filtered = [];
+
     if (filterId === "1") {
-      filteredVideos = videodata;
+      filtered = videodata;
     } else if (filterId === "2") {
-      filteredVideos = videodata.filter((video) => video.event.includes("goal"));
+      filtered = videodata.filter((video) => video.event.includes("goal"));
     } else if (filterId === "3") {
-      filteredVideos = videodata.filter((video) => video.event.includes("yellow card"));
+      filtered = videodata.filter((video) => video.event.includes("yellow card"));
     } else if (filterId === "4") {
-      filteredVideos = videodata.filter((video) => video.event.includes("shot"));
+      filtered = videodata.filter((video) => video.event.includes("shot"));
     }
-  
-    setDisplaydata(filteredVideos);
-  
-    // 🔥 Scroll FlatList to the top after filter change
+
+    setDisplaydata(filtered.slice(0, pagesize));
+
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: 0, animated: false });
     }
   };
-  
 
   useEffect(() => {
     if (videodata.length > 0) {
       applyFilter(selectedFilter);
     }
-  }, [selectedFilter, videodata]); 
+  }, [selectedFilter]);
 
   const loadmore = () => {
-    if (page * pagesize >= videodata.length) return;
-    setPage(page + 1);
-    setDisplaydata(videodata.slice(0, (page + 1) * pagesize));
+    const filtered = selectedFilter === "1"
+      ? videodata
+      : videodata.filter((video) => {
+          if (selectedFilter === "2") return video.event.includes("goal");
+          if (selectedFilter === "3") return video.event.includes("yellow card");
+          if (selectedFilter === "4") return video.event.includes("shot");
+          return true;
+        });
+
+    const nextPage = page + 1;
+    setPage(nextPage);
+    setDisplaydata(filtered.slice(0, nextPage * pagesize));
   };
 
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+  const onViewableItemsChanged = useCallback(({ viewableItems }) => {
     if (viewableItems.length > 0) {
       setCurrentVideoIndex(viewableItems[0].index);
     }
-  });
+  }, []);
 
   const goToTimeline = (gameid: string) => {
     navigation.navigate('Timeline', { gameid });
   };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#fff" />
+        <Text style={{ color: "#fff", marginTop: 10 }}>Loading video feed...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
-      
       <View style={styles.filterBarContainer}>
         <FilterBar
           filters={filterOptions}
           selectedFilter={selectedFilter}
           onSelectFilter={setSelectedFilter}
         />
-      </View>      
-      <FlatList 
-      ref={flatListRef}
+      </View>
+      <FlatList
+        ref={flatListRef}
         data={displaydata}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item?.id?.toString?.() || `${index}`}
         snapToInterval={Dimensions.get("window").height}
         decelerationRate="fast"
         pagingEnabled
@@ -117,7 +188,7 @@ export default function IndexScreen() {
         maxToRenderPerBatch={3}
         windowSize={5}
         removeClippedSubviews={true}
-        onViewableItemsChanged={onViewableItemsChanged.current}
+        onViewableItemsChanged={onViewableItemsChanged}
         renderItem={({ item, index }) => (
           <VideoPlayer
             videoUri={item.uri}
@@ -127,22 +198,22 @@ export default function IndexScreen() {
             event={item.event}
             isActive={index === currentVideoIndex}
             gameid={item.gameid}
-
+            score={item.score}
+            team={item.team}
           />
         )}
       />
-      
     </View>
   );
-  
 }
+
 const styles = StyleSheet.create({
   filterBarContainer: {
-    position: "absolute",   
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     paddingTop: 10,
-    zIndex: 100,           
+    zIndex: 100,
   },
 });
