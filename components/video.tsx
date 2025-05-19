@@ -7,13 +7,14 @@ import {
   TouchableOpacity,
   ImageBackground,
   StatusBar,
+  StyleSheet,
 } from "react-native";
-import { Video } from "expo-av";
+import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/RootNavigator";
+import { RootStackParamList } from "../navigation/RootNavigator.js";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Index">;
 
@@ -115,31 +116,15 @@ function VideoPlayer({
       <Video
         ref={videoRef}
         source={{ uri: videoUri }}
-        style={{
-          width: "100%",
-          height: "100%",
-          position: "absolute",
-          top: 0,
-          left: 0,
-        }}
-        resizeMode="cover"
+        style={styles.VideoPlayer}
+        resizeMode={ResizeMode.COVER}
         isLooping
         useNativeControls={false}
       />
 
       {isActive && (
         <View
-          style={{
-            position: "absolute",
-            left: 15,
-            bottom: 150,
-            backgroundColor: "#1d51a3",
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            borderRadius: 30,
-            flexDirection: "row",
-            alignItems: "center",
-          }}
+         style={styles.isActiveate}
         >
           <TouchableOpacity
             onPress={handleNavigateToTimeline}
@@ -164,13 +149,7 @@ function VideoPlayer({
 
       {/* Score and event overlay */}
       <View
-        style={{
-          position: "absolute",
-          bottom: 30,
-          flexDirection: "row",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-        }}
+        style = {styles.scoreAndEventOverlay}
       >
         <LinearGradient
           colors={[
@@ -180,38 +159,14 @@ function VideoPlayer({
           ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={{
-            flex: 1,
-            flexDirection: "row",
-            padding: 10,
-            alignItems: "center",
-            marginBottom: 20,
-          }}
+          style={styles.linearGrandient}
         >
           {matchInfo && (
             <>
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  overflow: "hidden", // Ensures the image is cropped to this box
-                  borderRadius: 10, // Optional, for smoother edges
-                  justifyContent: "center",
-                }}
-              >
+              <View style={styles.matchinfo}>
                 <Image
-                  // source={{ uri: matchInfo.tournament.logo_url }} // this should be used when an image from the API is available
                   source={require("./images/Allsvenskan.png")}
-                  style={{
-                    width: "200%",       // Zoom it
-                    height: "140%",      // Zoom it
-                    resizeMode: "contain",
-                    opacity: 0.5,
-                    marginLeft: -300,     // Adjust horizontal crop
-                  }}
+                  style={styles.matchinfoImage}
                 />
               </View>
 
@@ -230,14 +185,7 @@ function VideoPlayer({
                   style={{ justifyContent: "center", alignItems: "center" }}
                 >
                   <Text
-                    style={{
-                      fontSize: 20,
-                      fontWeight: "bold",
-                      color: "#fff",
-                      backgroundColor: "#1d51a3",
-                      padding: 5,
-                      borderRadius: 12,
-                    }}
+                    style={styles.TextResult}
                   >
                     {event === "goal" ? (
   team === matchInfo.Home_team ? (
@@ -258,12 +206,7 @@ function VideoPlayer({
                   source={{
                     uri: matchInfo.visiting_team.logo_url,
                   }}
-                  style={{
-                    width: 60,
-                    height: 60,
-                    margin: 5,
-                    resizeMode: "contain",
-                  }}
+                  style={styles.matchinfoImageHomeTeam}
                 />
               </View>
             </>
@@ -272,44 +215,20 @@ function VideoPlayer({
 
 
       </View>
-      <View
-        style={{
-          position: "absolute",
-          bottom: 70,
-          left: 220,
-          right: 0, // Added to make the container stretch to the right
-          flexDirection: "row",
-          padding: 10,
-          alignItems: "center",
-        }}
-      >
+      
+      <View style={styles.eventContainer}>
         <View
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: 15,
-            backgroundColor: "white",
-            alignItems: "center",
-            justifyContent: "center",
-            marginLeft: 5,
-          }}
+          style={styles.eventViewContent}
         >
           {event === "goal" || event === "shot" ? (
             <FontAwesome name="futbol-o" size={20} color="black" />
           ) : event === "yellow card" ? (
             <View
-              style={{
-                width: 13,
-                height: 20,
-                borderRadius: 3,
-                backgroundColor: "#ffdd00",
-                borderWidth: 0.5,
-                borderColor: "#000",
-              }}
+              style={styles.eventIcon}
             />
           ) : null}
         </View>
-        <Text style={{ fontSize: 16, color: "#fff", paddingLeft: 10 }}>
+        <Text style={styles.eventText}>
           {event.toUpperCase()}
         </Text>
       </View>
@@ -317,18 +236,7 @@ function VideoPlayer({
       {/* Play Icon Overlay */}
       {!isPlaying && isPaused && (
         <View
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: [{ translateX: -25 }, { translateY: -25 }],
-            width: 50,
-            height: 50,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: 0.5,
-
-          }}
+          style={styles.playingPause}
         >
           <Image
             source={require("./images/play-icon.png")}
@@ -339,4 +247,111 @@ function VideoPlayer({
     </TouchableOpacity>
   );
 }
+const styles = StyleSheet.create({
+  isActiveate:{
+    position: "absolute",
+    left: 15,
+    bottom: 150,
+    backgroundColor: "#1d51a3",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  VideoPlayer:{
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+    top: 0,
+    left: 0,
+  },
+  scoreAndEventOverlay: {
+    position: "absolute",
+    bottom: 30,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+  },
+  matchinfo:{
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: "hidden", // Ensures the image is cropped to this box
+    borderRadius: 10, // Optional, for smoother edges
+    justifyContent: "center",
+},
+  matchinfoImage:{
+    width: "200%",       // Zoom it
+    height: "140%",      // Zoom it
+    resizeMode: "contain",
+    opacity: 0.5,
+    marginLeft: -300,     // Adjust horizontal crop
+},
+  matchinfoImageHomeTeam:{
+    width: 60,
+    height: 60,
+    margin: 5,
+    resizeMode: "contain",
+},
+  playingPause:{
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: -25 }, { translateY: -25 }],
+    width: 50,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    opacity: 0.5,
+  },
+  TextResult:{
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+    backgroundColor: "#1d51a3",
+    padding: 5,
+    borderRadius: 12,
+  },
+  linearGrandient:{
+    flex: 1,
+    flexDirection: "row",
+    padding: 10,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  eventContainer:{
+    position: "absolute",
+    bottom: 70,
+    left: 220,
+    right: 0, // Added to make the container stretch to the right
+    flexDirection: "row",
+    padding: 10,
+    alignItems: "center",
+  }, 
+  eventViewContent:{
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 5,
+  },
+  eventIcon:{
+    width: 13,
+    height: 20,
+    borderRadius: 3,
+    backgroundColor: "#ffdd00",
+    borderWidth: 0.5,
+    borderColor: "#000",
+  },
+  eventText:{
+    fontSize: 16,
+    color: "#fff",
+    paddingLeft: 10,
+  }
+});
 export default React.memo(VideoPlayer);
