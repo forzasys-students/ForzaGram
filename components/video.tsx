@@ -25,9 +25,11 @@ interface VideoPlayerProps {
   isActive: boolean;
   gameid: string;
   season?: string;
+  score?: string;
+  team?: string;
 }
 
-export default function VideoPlayer({
+function VideoPlayer({
   videoUri,
   team1,
   team2,
@@ -35,6 +37,8 @@ export default function VideoPlayer({
   event,
   isActive,
   gameid,
+  score,
+  team,
 }: VideoPlayerProps) {
   const videoRef = useRef<any>(null);
   const [matchInfo, setMatchInfo] = useState<any>(null);
@@ -43,6 +47,7 @@ export default function VideoPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const isFocused = useIsFocused();
   const navigation = useNavigation<NavigationProp>();
+  const [homegoals, awaygoals] = score?.split("-").map(Number) || [0, 0];
 
   useEffect(() => {
     if (videoRef.current) {
@@ -234,7 +239,19 @@ export default function VideoPlayer({
                       borderRadius: 12,
                     }}
                   >
-                    <Text>{matchInfo.home_team_goals} - {matchInfo.visiting_team_goals}</Text>
+                    {event === "goal" ? (
+  team === matchInfo.Home_team ? (
+    <Text>
+      <Text style={{ color: "yellow" }}>{homegoals + 1}</Text> - {awaygoals}
+    </Text>
+  ) : (
+    <Text>
+      {homegoals} - <Text style={{ color: "yellow" }}>{awaygoals + 1}</Text>
+    </Text>
+  )
+) : (
+  <Text>{score}</Text>
+)}
                   </Text>
                 </View>
                 <Image
@@ -322,3 +339,4 @@ export default function VideoPlayer({
     </TouchableOpacity>
   );
 }
+export default React.memo(VideoPlayer);
