@@ -25,14 +25,23 @@ type Fixture = {
     homeTeamGoals: number;
     visitingTeamGoals: number;
     start_of_1st_half: string;
-  };
+};
 
 export default function Fixtures() {
     const [fixtures, setFixtures] = useState<Fixture[]>([]);
     const [loading, setLoading] = useState(true);
     const [games, setGames] = useState([]);
     const navigation = useNavigation<FixturesRouteProp>();
-
+    const no_data_available_message = (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 16, color: '#555' }}>No matches available</Text>
+        </View>
+    );
+    const error_while_fetching_message = (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 16, color: '#555' }}>Error while fetching data</Text>
+        </View>
+    );
 
     useEffect(() => {
         fetch(googleSheetsDataUrl)
@@ -42,18 +51,18 @@ export default function Fixtures() {
                     console.warn('⚠️ No data received from Google Sheets');
                     setFixtures([]); 
                     setLoading(false);
-                    return;
+                    return no_data_available_message;
                 }
-    
+
                 const allGameIds = data.values.map((item) => item[4]);
                 const uniqueGameIds = [...new Set(allGameIds)];
                 const formattedData = uniqueGameIds.map((gameid, index) => ({
                     id: index.toString(),
                     gameid,
                 }));
-    
+
                 setGames(formattedData);
-    
+
                 const matchInfoPromises = formattedData.map((game) =>
                     fetch(`https://api.forzasys.com/allsvenskan/game/${game.gameid}`)
                         .then((response) => response.json())
@@ -79,10 +88,10 @@ export default function Fixtures() {
                         }))
                         .catch((err) => {
                             console.error("Failed to fetch match info", err);
-                            return null;
+                            return error_while_fetching_message;
                         })
                 );
-    
+
                 Promise.all(matchInfoPromises).then((matchInfo) => {
                     // Filter out null results in case of fetch errors
                     setFixtures(matchInfo.filter((f): f is Fixture => f !== null));
@@ -93,9 +102,10 @@ export default function Fixtures() {
                 console.error("❌ Error fetching fixtures:", error);
                 setFixtures([]); // Optional: set error state for retry UI
                 setLoading(false);
+                return error_while_fetching_message;
             });
     }, []);
-    
+
 
     const handleNavigateToTimeline = (gameid: string) => {
         navigation.navigate("Timeline", { gameid: gameid });
@@ -104,7 +114,7 @@ export default function Fixtures() {
     if (loading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#0000ff" />
+                <ActivityIndicator size="large" color="#0000ff" />
             </View>
         );
     }
