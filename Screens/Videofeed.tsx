@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, FlatList, Dimensions, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { View, FlatList, Dimensions, TouchableOpacity, Text, StyleSheet, Platform } from "react-native";
 import 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -97,13 +97,18 @@ export default function IndexScreen() {
   return (
     <View style={{ flex: 1 }}>
       
-      <View style={styles.filterBarContainer}>
+      <View
+        style={[
+          styles.filterBarContainer,
+          { paddingTop: Platform.OS === "ios" ? 60 : 10 }, // Add extra padding for iOS
+        ]}
+      >
         <FilterBar
           filters={filterOptions}
           selectedFilter={selectedFilter}
           onSelectFilter={setSelectedFilter}
         />
-      </View>      
+      </View>
       <FlatList 
       ref={flatListRef}
         data={displaydata}
