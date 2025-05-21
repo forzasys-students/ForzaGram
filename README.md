@@ -13,7 +13,7 @@ Upon project creation, the ".expo" folder is already added to your ".gitignore" 
 
 
 
-# ⚽ ForzaGram
+#  ForzaGram
 
 ForzaGram is a mobile application built with **React Native** and **Expo SDK 52**, designed to deliver an engaging and fast way for users to view key football moments. The app fetches video highlight data dynamically from an external API and presents it in a clean, scrollable interface.
 
@@ -21,7 +21,7 @@ With React Native, we achieve a shared codebase for both **iOS** and **Android**
 
 ---
 
-## ✨ Features
+##  Features
 
 - Displays short highlight videos (e.g. goals, red/yellow cards, shots)
 - Scrollable single-video view
@@ -48,7 +48,7 @@ To simulate the application during development, you’ll also need **at least on
 
 ---
 
-## 📥 Installation and Running Steps
+## Installation and Running Steps
 
 Follow these steps to set up and run the application locally:
 
