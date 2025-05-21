@@ -188,13 +188,13 @@ function VideoPlayer({
                     style={styles.TextResult}
                   >
                     {event === "goal" ? (
-  team === matchInfo.Home_team ? (
+  team === matchInfo.home_team.name ? (
     <Text>
-      <Text style={{ color: "yellow" }}>{homegoals + 1}</Text> - {awaygoals}
+      <Text style={{ color: "yellow" }}>{homegoals }</Text> - {awaygoals}
     </Text>
   ) : (
     <Text>
-      {homegoals} - <Text style={{ color: "yellow" }}>{awaygoals + 1}</Text>
+      {homegoals} - <Text style={{ color: "yellow" }}>{awaygoals}</Text>
     </Text>
   )
 ) : (

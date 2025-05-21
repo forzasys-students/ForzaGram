@@ -21,22 +21,25 @@ export default function VideoScreen() {
   const route = useRoute<VideoScreenRouteProp>();
   const { assetId, from, to, gameid, matchInfo } = route.params;
 
-  const videoRef = useRef(null);
+  const videoRef = useRef<Video | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const navigation = useNavigation<NavigationProp>();
 
   const videoUrl = `https://api.forzasys.com/allsvenskan/playlist.m3u8/${assetId}:${from}:${to}/Manifest.m3u8`;
 
   const togglePause = async () => {
-    const status = await videoRef.current?.getStatusAsync();
-    if (status?.isPlaying) {
-      await videoRef.current.pauseAsync();
-      setIsPaused(true);
-    } else {
-      await videoRef.current.playAsync();
-      setIsPaused(false);
-    }
-  };
+  if (!videoRef.current) return;
+
+  const status = await videoRef.current.getStatusAsync();
+  if (status.isLoaded && status.isPlaying) {
+    await videoRef.current.pauseAsync();
+    setIsPaused(true);
+  } else if (status.isLoaded) {
+    await videoRef.current.playAsync();
+    setIsPaused(false);
+  }
+};
+
   const goBackToTimeline = () => {
     if (gameid) {
       navigation.navigate('Timeline', { gameid });

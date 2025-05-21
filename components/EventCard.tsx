@@ -10,10 +10,10 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'VideoScreen
 
 
 interface Props {
-  assetId: number;
-  from: number;
-  to: number;
-  eventType: string;
+  assetId: any;
+  from: any;
+  to: any;
+  eventType: any;
   scorer?: string;
   keeper?: string;
   imageLogo?: string;

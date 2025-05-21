@@ -18,9 +18,19 @@ type FixturesRouteProp = RouteProp<RootStackParamList, 'Fixtures'>;
 const googleSheetsDataUrl = "https://sheets.googleapis.com/v4/spreadsheets/15sgdpVXsUMZdmxRdpfuFMc2pj4csPElt2dI7u5P9ROk/values/A2:G?key=AIzaSyCcADeLUsyye03WViRsMDviXjYOsmm-6eY";
 
 export default function Fixtures() {
-    const [fixtures, setFixtures] = useState([]);
+    const [fixtures, setFixtures] = useState<Array<{
+  gameid: string;
+  home_team: { name: string; [key: string]: any };
+  visiting_team: { name: string; [key: string]: any };
+  homeTeamLogo: string;
+  visitingTeamLogo: string;
+  homeTeamGoals: any;
+  visitingTeamGoals: any;
+  start_of_1st_half: any;
+}>>([]);
+
     const [loading, setLoading] = useState(true);
-    const [games, setGames] = useState([]);
+    const [games, setGames] = useState<{ id: string; gameid: string }[]>([]);
     const navigation = useNavigation<FixturesRouteProp>();
 
 
@@ -28,17 +38,18 @@ export default function Fixtures() {
         fetch(googleSheetsDataUrl)
             .then((response) => response.json())
             .then((data) => {
-                const allGameIds = data.values.map((item) => item[4]);
+                const allGameIds = data.values.map((item:string[]) => item[4]);
 
                 // Step 2: Filter only unique gameids
                 const uniqueGameIds = [...new Set(allGameIds)];
                 console.log("✅ Unique Game IDs:", uniqueGameIds);
 
                 // Step 3: Format for your loop
-                const formattedData = uniqueGameIds.map((gameid, index) => ({
-                    id: index.toString(),
-                    gameid,
-                }));
+                const formattedData = uniqueGameIds.map((gameid, index): { id: string; gameid: string } => ({
+                 id: index.toString(),
+                 gameid: gameid as string,
+            }));
+
                 setGames(formattedData);
                 const matchInfoPromises = formattedData.map((game) => {
                     const gameinfo = fetch(`https://api.forzasys.com/allsvenskan/game/${game.gameid}`)

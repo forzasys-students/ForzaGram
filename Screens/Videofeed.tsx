@@ -7,14 +7,27 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  ViewToken,
 } from "react-native";
 import 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from "@/navigation/RootNavigator";
+import { RootStackParamList } from "../navigation/RootNavigator";
 
 import VideoPlayer from "../components/video";
 import FilterBar from "../components/FilterBar";
+
+type VideoItem = {
+  id: string;
+  uri: string;
+  season: string;
+  team1: string;
+  team2: string;
+  event: string;
+  score: string;
+  team: string;
+  gameid: string;
+};
 
 const pagesize = 10;
 const googlesheetsdataurl = "https://sheets.googleapis.com/v4/spreadsheets/15sgdpVXsUMZdmxRdpfuFMc2pj4csPElt2dI7u5P9ROk/values/A2:G?key=AIzaSyCcADeLUsyye03WViRsMDviXjYOsmm-6eY";
@@ -30,35 +43,32 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Index'>;
 
 export default function IndexScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const flatListRef = useRef<FlatList>(null);
-  const [videodata, setVideodata] = useState([]);
-  const [displaydata, setDisplaydata] = useState([]);
-  const [selectedFilter, setSelectedFilter] = useState("1");
-  const [page, setPage] = useState(1);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const flatListRef = useRef<FlatList<VideoItem>>(null);
+  const [videodata, setVideodata] = useState<VideoItem[]>([]);
+  const [displaydata, setDisplaydata] = useState<VideoItem[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<string>("1");
+  const [page, setPage] = useState<number>(1);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchClipsFromGame = async (gameid) => {
+    const fetchClipsFromGame = async (gameid: string): Promise<VideoItem[]> => {
       try {
         const res = await fetch(`https://api.forzasys.com/allsvenskan/game/${gameid}/events?count=99999`);
         const data = await res.json();
-        const clips = data.events
-          .filter(event => event.playlist?.video_url)
-          .map((event, index) => ({
-            id: `${gameid}-${event.id}-${index}`, // Unique ID for each event
+        const clips: VideoItem[] = data.events
+          .filter((event: any) => event.playlist?.video_url)
+          .map((event: any, index: number) => ({
+            id: `${gameid}-${event.id}-${index}`,
             uri: event.playlist.video_url,
             season: event.playlist.game?.tournament?.name || "Unknown",
             team1: event.playlist.game?.home_team?.name || "Home",
             team2: event.playlist.game?.visiting_team?.name || "Away",
             event: event.tag?.action?.toLowerCase() || "",
             score: event.score,
-            team: event.tag?.team?.name || "",
+            team: event.tag?.team?.value || "",
             gameid: gameid
-            
-          }
-        ));
-        
+          }));
         return clips;
       } catch (err) {
         console.error(`Error fetching events for game ${gameid}:`, err);
@@ -70,29 +80,24 @@ export default function IndexScreen() {
       try {
         const response = await fetch(googlesheetsdataurl);
         const sheetData = await response.json();
-      const gameIds = [
-  ...new Set(sheetData.values.map(item => item[4]).filter(Boolean))
-];
-
+        const rawValues = sheetData.values as string[][];
+        const gameIds: string[] = [...new Set(rawValues.map((item) => item[4]).filter(Boolean))];
         const allClips = await Promise.all(gameIds.map(fetchClipsFromGame));
         const flattened = allClips.flat();
         const ids = flattened.map(item => item.id);
-const hasDuplicates = new Set(ids).size !== ids.length;
+        const hasDuplicates = new Set(ids).size !== ids.length;
 
-if (hasDuplicates) {
-  const seen = new Set();
-  const dupes = ids.filter(id => {
-    if (seen.has(id)) return true;
-    seen.add(id);
-    return false;
-  });
-  console.warn("⚠️ Duplicate video IDs found:", dupes);
-}
+        if (hasDuplicates) {
+          const seen = new Set();
+          const dupes = ids.filter(id => {
+            if (seen.has(id)) return true;
+            seen.add(id);
+            return false;
+          });
+          console.warn("⚠️ Duplicate video IDs found:", dupes);
+        }
 
-
-        // Shuffle for variety
         const shuffled = flattened.sort(() => 0.5 - Math.random());
-
         setVideodata(shuffled);
         setDisplaydata(shuffled.slice(0, pagesize));
       } catch (err) {
@@ -105,9 +110,9 @@ if (hasDuplicates) {
     loadGameData();
   }, []);
 
-  const applyFilter = (filterId) => {
+  const applyFilter = (filterId: string) => {
     setSelectedFilter(filterId);
-    let filtered = [];
+    let filtered: VideoItem[] = [];
 
     if (filterId === "1") {
       filtered = videodata;
@@ -147,11 +152,14 @@ if (hasDuplicates) {
     setDisplaydata(filtered.slice(0, nextPage * pagesize));
   };
 
-  const onViewableItemsChanged = useCallback(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      setCurrentVideoIndex(viewableItems[0].index);
-    }
-  }, []);
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length > 0) {
+        setCurrentVideoIndex(viewableItems[0].index || 0);
+      }
+    },
+    []
+  );
 
   const goToTimeline = (gameid: string) => {
     navigation.navigate('Timeline', { gameid });
@@ -189,7 +197,7 @@ if (hasDuplicates) {
         windowSize={5}
         removeClippedSubviews={true}
         onViewableItemsChanged={onViewableItemsChanged}
-        renderItem={({ item, index }) => (
+        renderItem={({ item, index }: { item: VideoItem; index: number }) => (
           <VideoPlayer
             videoUri={item.uri}
             team1={item.team1}

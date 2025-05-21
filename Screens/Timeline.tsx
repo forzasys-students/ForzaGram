@@ -41,7 +41,7 @@ export default function Timeline() {
         const eventRes = await fetch(`https://api.forzasys.com/allsvenskan/game/${gameid}/events?count=99999`);
         const eventJson = await eventRes.json();
         const eventsData = eventJson?.events || [];
-        eventsData.sort((a, b) => {
+        eventsData.sort((a:any, b:any) => {
           const aTime = a?.playlist?.events?.[0]?.from_timestamp || 0;
           const bTime = b?.playlist?.events?.[0]?.from_timestamp || 0;
           return aTime - bTime;
@@ -126,7 +126,7 @@ export default function Timeline() {
       {...props}
       indicatorStyle={{ backgroundColor: '#1d51a3', height: 3 }}
       style={{ backgroundColor: 'black' }}
-      renderLabel={({ route, focused }) => (
+      renderLabel={({ route, focused }: { route: { title: string }; focused: boolean }) => (
         <Text style={{
           color: focused ? '#1d51a3' : '#888',
           fontWeight: focused ? 'bold' : 'normal',
