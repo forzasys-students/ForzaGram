@@ -32,7 +32,7 @@ With React Native, we achieve a shared codebase for both **iOS** and **Android**
 
 ---
 
-## 🔧 Prerequisites
+##  Prerequisites
 
 Before running the application, make sure the following tools are installed on your machine:
 
