@@ -50,8 +50,10 @@ export default function IndexScreen() {
   const [page, setPage] = useState<number>(1);
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
 
-  useEffect(() => {
+
     const fetchClipsFromGame = async (gameid: string): Promise<VideoItem[]> => {
       try {
         const res = await fetch(`https://api.forzasys.com/allsvenskan/game/${gameid}/events?count=99999`);
@@ -72,6 +74,8 @@ export default function IndexScreen() {
         return clips;
       } catch (err) {
         console.error(`Error fetching events for game ${gameid}:`, err);
+        setError('Unable to load data. Please check your internet connection.');
+
         return [];
       }
     };
@@ -106,7 +110,7 @@ export default function IndexScreen() {
         setLoading(false);
       }
     };
-
+  useEffect(() => {
     loadGameData();
   }, []);
 
@@ -174,6 +178,9 @@ export default function IndexScreen() {
     );
   }
 
+
+  
+
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.filterBarContainer}>
@@ -211,6 +218,15 @@ export default function IndexScreen() {
           />
         )}
       />
+      {error && (
+    <View style={styles.errorOverlay}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity onPress={loadGameData}>
+            <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+    </View>
+)}
+
     </View>
   );
 }
@@ -224,4 +240,24 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     zIndex: 100,
   },
+  errorOverlay: {
+        position: 'absolute',
+        bottom: 50,
+        left: 20,
+        right: 20,
+        backgroundColor: 'rgba(98, 0, 255, 0.8)',
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        zIndex:1000,
+    },
+    errorText: {
+        color: 'white',
+        marginBottom: 6,
+        textAlign: 'center',
+    },
+    retryText: {
+        color: '#00f',
+        fontWeight: 'bold',
+    }
 });

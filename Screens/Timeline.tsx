@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
   Image,
   StyleSheet,
   Dimensions,
@@ -24,6 +25,8 @@ export default function Timeline() {
   const [matchInfo, setMatchInfo] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [index, setIndex] = useState(0);
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>('all');
   const navigation = useNavigation<TimelineRouteProp>();
@@ -32,9 +35,11 @@ export default function Timeline() {
     { key: 'full', title: 'Full Events' },
   ];
 
-  useEffect(() => {
+  
     const loadTimelineData = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const matchRes = await fetch(`https://api.forzasys.com/allsvenskan/game/${gameid}`);
         const matchJson = await matchRes.json();
         setMatchInfo(matchJson);
@@ -50,11 +55,13 @@ export default function Timeline() {
         setEvents(eventsData);
       } catch (err) {
         console.error('Error loading timeline data:', err);
+        setError('Unable to load data. Please check your internet connection.');
+
       } finally {
         setLoading(false);
       }
     };
-
+useEffect(() => {
     loadTimelineData();
   }, [gameid]);
 
@@ -140,6 +147,23 @@ export default function Timeline() {
 
   if (loading) {
     return <LoadingIndicator />;
+  }
+  
+if (error) {
+    return (
+        <View style={styles.loadingContainer}>
+            <Text style={{ marginBottom: 10 }}>{error}</Text>
+            <TouchableOpacity onPress={() => {
+                
+                setLoading(true);
+                setError(null);
+                loadTimelineData();
+
+            }}>
+                <Text style={{ color: 'blue' }}>Retry</Text>
+            </TouchableOpacity>
+        </View>
+    );
   }
 
   return (
@@ -406,6 +430,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -31,64 +31,69 @@ export default function Fixtures() {
 
     const [loading, setLoading] = useState(true);
     const [games, setGames] = useState<{ id: string; gameid: string }[]>([]);
+    const [error, setError] = useState<string | null>(null);
 
     const navigation = useNavigation<FixturesRouteProp>();
 
-    useEffect(() => {
-        fetch(googleSheetsDataUrl)
-            .then((response) => response.json())
-            .then((data) => {
-                const allGameIds = data.values.map((item: string[]) => item[4]);
+   
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-                // Step 2: Filter only unique gameids
-                const uniqueGameIds = [...new Set(allGameIds)];
-                console.log("✅ Unique Game IDs:", uniqueGameIds);
+            const response = await fetch(googleSheetsDataUrl);
+            const data = await response.json();
 
-                // Step 3: Format for your loop
-                const formattedData = uniqueGameIds.map((gameid, index): { id: string; gameid: string } => ({
-                    id: index.toString(),
-                    gameid: gameid as string,
-                }));
+            const allGameIds = data.values.map((item: string[]) => item[4]);
+            const uniqueGameIds = [...new Set(allGameIds)];
+            console.log("✅ Unique Game IDs:", uniqueGameIds);
 
-                setGames(formattedData);
+            const formattedData = uniqueGameIds.map((gameid, index) => ({
+                id: index.toString(),
+                gameid: gameid as string,
+            }));
 
-                const matchInfoPromises = formattedData.map((game) => {
-                    const gameinfo = fetch(`https://api.forzasys.com/allsvenskan/game/${game.gameid}`)
-                        .then((response) => response.json())
-                        .then((matchJson) => {
-                            return {
-                                gameid: game.gameid,
-                                home_team: {
-                                    ...matchJson.home_team,
-                                    name:
-                                        matchJson.home_team.name.length > 10
-                                            ? matchJson.home_team.name.slice(0, 10) + '...'
-                                            : matchJson.home_team.name,
-                                },
-                                visiting_team: {
-                                    ...matchJson.visiting_team,
-                                    name:
-                                        matchJson.visiting_team.name.length > 10
-                                            ? matchJson.visiting_team.name.slice(0, 10) + '...'
-                                            : matchJson.visiting_team.name,
-                                },
-                                homeTeamLogo: matchJson.home_team.logo_url,
-                                visitingTeamLogo: matchJson.visiting_team.logo_url,
-                                homeTeamGoals: matchJson.home_team_goals,
-                                visitingTeamGoals: matchJson.visiting_team_goals,
-                                start_of_1st_half: matchJson.start_of_1st_half,
-                            };
-                        });
-                    return gameinfo;
-                });
+            setGames(formattedData);
 
-                Promise.all(matchInfoPromises).then((matchInfo) => {
-                    setFixtures(matchInfo);
-                    console.log(matchInfo);
-                    setLoading(false);
-                });
-            });
-    }, []);
+            const matchInfoPromises = formattedData.map((game) =>
+                fetch(`https://api.forzasys.com/allsvenskan/game/${game.gameid}`)
+                    .then((res) => res.json())
+                    .then((matchJson) => ({
+                        gameid: game.gameid,
+                        home_team: {
+                            ...matchJson.home_team,
+                            name: matchJson.home_team.name.length > 10
+                                ? matchJson.home_team.name.slice(0, 10) + '...'
+                                : matchJson.home_team.name,
+                        },
+                        visiting_team: {
+                            ...matchJson.visiting_team,
+                            name: matchJson.visiting_team.name.length > 10
+                                ? matchJson.visiting_team.name.slice(0, 10) + '...'
+                                : matchJson.visiting_team.name,
+                        },
+                        homeTeamLogo: matchJson.home_team.logo_url,
+                        visitingTeamLogo: matchJson.visiting_team.logo_url,
+                        homeTeamGoals: matchJson.home_team_goals,
+                        visitingTeamGoals: matchJson.visiting_team_goals,
+                        start_of_1st_half: matchJson.start_of_1st_half,
+                    }))
+            );
+
+            const matchInfo = await Promise.all(matchInfoPromises);
+            setFixtures(matchInfo);
+        } catch (err) {
+            console.error('❌ Failed to fetch data:', err);
+            setError('Unable to load data. Please check your internet connection.');
+        } finally {
+            setLoading(false);
+        }
+    };
+     useEffect(() => {
+
+    fetchData();
+}, []);
+
 
     const handleNavigateToTimeline = (gameid: string) => {
         navigation.navigate("Timeline", { gameid: gameid });
@@ -101,7 +106,24 @@ export default function Fixtures() {
             </View>
         );
     }
+    if (error) {
+    return (
+        <View style={styles.loadingContainer}>
+            <Text style={{ marginBottom: 10 }}>{error}</Text>
+            <TouchableOpacity onPress={() => {
+                
+                setLoading(true);
+                setError(null);
+                fetchData();
 
+            }}>
+                <Text style={{ color: 'blue' }}>Retry</Text>
+            </TouchableOpacity>
+        </View>
+    );
+
+
+    }
     return (
         <ScrollView style={styles.scrollView}>
             <View style={styles.container}>
