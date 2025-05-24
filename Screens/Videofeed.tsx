@@ -218,14 +218,6 @@ export default function IndexScreen() {
           />
         )}
       />
-      {error && (
-    <View style={styles.errorOverlay}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity onPress={loadGameData}>
-            <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-    </View>
-)}
 
     </View>
   );
@@ -240,24 +232,4 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     zIndex: 100,
   },
-  errorOverlay: {
-        position: 'absolute',
-        bottom: 50,
-        left: 20,
-        right: 20,
-        backgroundColor: 'rgba(98, 0, 255, 0.8)',
-        padding: 12,
-        borderRadius: 8,
-        alignItems: 'center',
-        zIndex:1000,
-    },
-    errorText: {
-        color: 'white',
-        marginBottom: 6,
-        textAlign: 'center',
-    },
-    retryText: {
-        color: '#00f',
-        fontWeight: 'bold',
-    }
 });
