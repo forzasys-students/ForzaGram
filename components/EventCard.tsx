@@ -65,7 +65,7 @@ export default function EventCard({
     UIManager.setLayoutAnimationEnabledExperimental &&
       UIManager.setLayoutAnimationEnabledExperimental(true);
   }
-  
+
   const HomeTeamEvents = () => {
     return (
       <>
@@ -142,8 +142,8 @@ export default function EventCard({
                     {/* In case it's a goal, show the new score */}
                     {eventType.toLowerCase() === 'goal' && (
                       <>
-                        {' '}{result?.split('-')[0]} -
-                        <Text style={styles.boldGoal}> {result?.split('-')[1]}</Text>
+
+                        <Text style={styles.boldGoal}>{result?.split('-')[0]}</Text>{' '}-{' '}{result?.split('-')[1]}
                       </>
                     )}
                   </Text>
